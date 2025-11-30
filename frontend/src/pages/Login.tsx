@@ -128,11 +128,10 @@ const Login: React.FC = () => {
         </form>
         
         <div className="text-center text-sm text-gray-400">
-          <p className="mb-2">Use your educational institution email (.edu.in or .ac.in)</p>
-          <p>Don't have an account?{' '}
+          Don't have an account?{' '}
           <Link to="/register" className="font-medium text-purple-400 hover:text-purple-300">
             Sign up
-          </Link></p>
+          </Link>
         </div>
       </div>
     </div>

@@ -48,12 +48,6 @@ const Register: React.FC = () => {
       return;
     }
     
-    // Validate educational institution email domains
-    if (!formData.email.endsWith('.edu.in') && !formData.email.endsWith('.ac.in')) {
-      setError('Please use a valid educational email (.edu.in or .ac.in)');
-      return;
-    }
-    
     // Validate .edu email domain for student verification
     if (!formData.email.endsWith('.edu') && !formData.email.endsWith('.edu.in')) {
       setError('Please use a valid educational institution email (.edu or .edu.in domain)');
