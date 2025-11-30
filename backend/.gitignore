@@ -128,6 +128,11 @@ out/
 .env.development
 .env.test
 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -138,10 +143,6 @@ out/
 *.njsproj
 *.sln
 *.sw?
-
-# Vite specific
-.vite/
-.env*.local
 
 # Temporary files
 *.tmp
