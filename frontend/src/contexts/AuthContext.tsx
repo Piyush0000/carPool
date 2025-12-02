@@ -118,11 +118,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Google Sign-In function
   const handleGoogleSignIn = async () => {
     try {
-      // For now, we'll implement a placeholder that shows a message
-      // In a real implementation, you would integrate with Google OAuth
-      console.log('Google Sign-In clicked - redirecting to backend OAuth flow');
-      // Redirect to backend Google OAuth endpoint
-      window.location.href = `${axios.defaults.baseURL}/api/auth/google`;
+      // Show an alert that Google Sign-In is not configured
+      alert('Google Sign-In is not configured for this deployment. Please use email/password login instead.');
+      // Alternatively, you could implement Google Sign-In on the frontend using Google's JavaScript SDK
+      // For now, we'll just reject the promise to prevent navigation
+      throw new Error('Google Sign-In not configured');
     } catch (error) {
       console.error('Google sign-in error:', error);
       throw error;
