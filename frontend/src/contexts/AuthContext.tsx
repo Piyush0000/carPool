@@ -190,6 +190,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             throw new Error('Network error. Please check your connection and try again.');
           case 'auth/invalid-api-key':
             throw new Error('Authentication service is not properly configured. Please use email/password login instead.');
+          case 'auth/unauthorized-domain':
+            throw new Error('Google Sign-In is not authorized for this domain. Please use email/password login instead or contact support.');
           default:
             throw new Error(`Authentication failed: ${error.message}`);
         }
