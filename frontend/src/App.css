@@ -147,6 +147,22 @@ body {
   }
 }
 
+/* Additional animations for enhanced UI */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fadeInUp {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
 /* Ensure proper opacity */
 .opacity-0 {
   opacity: 0;
@@ -186,7 +202,15 @@ body {
   cursor: pointer;
 }
 
-/* Ensure proper pointer events */
 .pointer-events-none {
   pointer-events: none;
+}
+
+/* Glassmorphism effect for cards */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 }

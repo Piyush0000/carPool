@@ -8,18 +8,36 @@ import Register from './pages/Register';
 import FindPool from './pages/FindPool';
 import GroupDetail from './pages/GroupDetail';
 import Profile from './pages/Profile';
-import RidePoolDashboard from './pages/RidePoolDashboard';
+import Dashboard from './pages/Dashboard';
 import GroupsPage from './pages/GroupsPage';
 import GroupChatPage from './pages/GroupChatPage';
 import EmailVerification from './pages/EmailVerification';
 import './App.css';
 
-// Background Animation Component
+// Background Animation Component with enhanced smooth animations
 const BackgroundAnimation: React.FC = () => {
+  // Create floating orbs for enhanced background
+  const orbs = Array.from({ length: 15 }, (_, i) => (
+    <div 
+      key={i} 
+      className="floating-orb"
+      style={{
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        width: `${Math.random() * 100 + 20}px`,
+        height: `${Math.random() * 100 + 20}px`,
+        animationDelay: `${Math.random() * 10}s`,
+        animationDuration: `${Math.random() * 20 + 20}s`
+      }}
+    ></div>
+  ));
+
   return (
     <>
+      <div className="animated-grid"></div>
       <div className="background-blob background-blob-1"></div>
       <div className="background-blob background-blob-2"></div>
+      {orbs}
     </>
   );
 };
@@ -44,8 +62,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
-        <div className="animate-pulse-glow w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-500 to-orange-500"></div>
       </div>
     );
   }
@@ -64,25 +82,25 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white relative overflow-hidden">
+          <div className="min-h-screen bg-white text-gray-900 relative overflow-hidden">
             <BackgroundAnimation />
             <Routes>
               <Route path="/" element={
                 <PublicRoute>
                   <div className="min-h-screen flex items-center justify-center relative z-10">
-                    <div className="text-center p-8 rounded-2xl glass border border-gray-700 shadow-2xl max-w-2xl w-full mx-4">
-                      <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent mb-6 animate-fade-in">
+                    <div className="text-center p-8 rounded-2xl ridepool-card shadow-2xl max-w-2xl w-full mx-4">
+                      <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent mb-6">
                         Ride Pool
                       </h1>
-                      <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-blue-500 mx-auto mb-6 rounded-full"></div>
-                      <p className="text-xl text-gray-300 mb-8 animate-fade-in">
+                      <div className="w-24 h-1 bg-gradient-to-r from-pink-500 to-purple-500 mx-auto mb-6 rounded-full"></div>
+                      <p className="text-xl text-gray-700 mb-8">
                         Welcome to the future of campus transportation
                       </p>
                       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to="/login" className="ridepool-btn ridepool-btn-primary px-6 py-3 rounded-lg font-semibold hover-lift">
+                        <Link to="/login" className="ridepool-btn ridepool-btn-primary px-6 py-3 rounded-lg font-semibold">
                           Get Started
                         </Link>
-                        <Link to="/register" className="ridepool-btn ridepool-btn-secondary px-6 py-3 rounded-lg font-semibold hover-lift">
+                        <Link to="/register" className="ridepool-btn ridepool-btn-secondary px-6 py-3 rounded-lg font-semibold">
                           Sign Up
                         </Link>
                       </div>
@@ -105,7 +123,7 @@ function App() {
                   <div className="min-h-screen flex flex-col">
                     <Navbar />
                     <main className="flex-grow pt-16">
-                      <RidePoolDashboard />
+                      <Dashboard />
                     </main>
                   </div>
                 </ProtectedRoute>

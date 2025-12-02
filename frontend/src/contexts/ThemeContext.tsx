@@ -9,7 +9,8 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  // Default to light theme for colorful design
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     // Check system preference or saved preference
@@ -17,8 +18,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (savedTheme) {
       setIsDarkMode(savedTheme === 'dark');
     } else {
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(systemPrefersDark);
+      // Default to light theme for colorful design
+      setIsDarkMode(false);
     }
   }, []);
 

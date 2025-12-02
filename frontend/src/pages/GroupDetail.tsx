@@ -245,10 +245,10 @@ const GroupDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-white">Loading group details...</p>
+          <p className="mt-4 text-gray-900">Loading group details...</p>
         </div>
       </div>
     );
@@ -256,13 +256,13 @@ const GroupDetail: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center ridepool-card p-8">
-          <svg className="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <h3 className="mt-2 text-lg font-medium text-white">Error Loading Group</h3>
-          <p className="mt-1 text-sm text-gray-300">{error}</p>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">Error Loading Group</h3>
+          <p className="mt-1 text-sm text-gray-700">{error}</p>
           <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
             <button
               onClick={() => window.location.reload()}
@@ -287,51 +287,51 @@ const GroupDetail: React.FC = () => {
   const currentUserId = (user as any)?.id || (user as any)?._id;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white">{group?.name}</h1>
-          <p className="mt-1 text-sm text-gray-300">Group details and chat</p>
+        <div className="mb-6 animate-fade-in">
+          <h1 className="text-3xl font-bold text-gray-900">{group?.name}</h1>
+          <p className="mt-1 text-sm text-gray-700">Group details and chat</p>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Group Info */}
           <div className="lg:col-span-1 space-y-6">
             {/* Group Details Card */}
-            <div className="ridepool-card">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-700">
-                <h3 className="text-lg font-semibold text-white">Group Details</h3>
+            <div className="ridepool-card animate-slideInLeft">
+              <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Group Details</h3>
               </div>
-              <div className="border-t border-gray-700">
+              <div className="border-t border-gray-200">
                 <dl>
                   <div className="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-300">Route</dt>
-                    <dd className="mt-1 text-sm text-white sm:mt-0 sm:col-span-2">
+                    <dt className="text-sm font-medium text-gray-700">Route</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                       <div className="flex flex-col">
-                        <span className="text-green-400">📍 {group?.route.pickup}</span>
-                        <span className="text-red-400 mt-1">🏁 {group?.route.drop}</span>
+                        <span className="text-green-600">📍 {group?.route.pickup}</span>
+                        <span className="text-red-600 mt-1">🏁 {group?.route.drop}</span>
                       </div>
                     </dd>
                   </div>
                   <div className="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-300">Status</dt>
-                    <dd className="mt-1 text-sm text-white sm:mt-0 sm:col-span-2">
+                    <dt className="text-sm font-medium text-gray-700">Status</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                       <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
                         group?.status === 'Open' 
-                          ? 'bg-green-500 bg-opacity-20 text-green-300' 
+                          ? 'bg-green-100 text-green-800' 
                           : group?.status === 'Locked' 
-                            ? 'bg-yellow-500 bg-opacity-20 text-yellow-300' 
-                            : 'bg-gray-500 bg-opacity-20 text-gray-300'
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-gray-100 text-gray-800'
                       }`}>
                         {group?.status}
                       </span>
                     </dd>
                   </div>
                   <div className="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-300">Members</dt>
-                    <dd className="mt-1 text-sm text-white sm:mt-0 sm:col-span-2">
+                    <dt className="text-sm font-medium text-gray-700">Members</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                       <span className="font-medium">{group?.members.length}</span>
-                      <span className="text-gray-400"> / {group?.seatCount}</span>
+                      <span className="text-gray-600"> / {group?.seatCount}</span>
                     </dd>
                   </div>
                 </dl>
@@ -339,25 +339,25 @@ const GroupDetail: React.FC = () => {
             </div>
 
             {/* Members List */}
-            <div className="ridepool-card">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-700">
+            <div className="ridepool-card animate-slideInLeft">
+              <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-white">Members</h3>
-                  <span className="px-2 py-1 text-xs bg-gray-700 rounded-full text-gray-300">
+                  <h3 className="text-lg font-semibold text-gray-900">Members</h3>
+                  <span className="px-2 py-1 text-xs bg-gray-100 rounded-full text-gray-700">
                     {group?.members.length} members
                   </span>
                 </div>
               </div>
-              <div className="border-t border-gray-700">
-                <ul className="divide-y divide-gray-700">
+              <div className="border-t border-gray-200">
+                <ul className="divide-y divide-gray-200">
                   {group?.members.map((member) => (
-                    <li key={member.id} className="px-4 py-3 sm:px-6 hover:bg-gray-700 hover:bg-opacity-30 transition-colors">
+                    <li key={member.id} className="px-4 py-3 sm:px-6 hover:bg-white hover:bg-opacity-70 transition-colors">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <div className={`rounded-full w-10 h-10 flex items-center justify-center ${
                             member.id === currentUserId
                               ? 'bg-gradient-to-br from-green-500 to-teal-500'
-                              : 'bg-gradient-to-br from-purple-500 to-blue-500'
+                              : 'bg-gradient-to-br from-pink-500 to-purple-500'
                           }`}>
                             <span className="text-white font-bold">
                               {member.name.charAt(0).toUpperCase()}
@@ -366,21 +366,21 @@ const GroupDetail: React.FC = () => {
                         </div>
                         <div className="ml-3 min-w-0 flex-1">
                           <div className="flex items-center">
-                            <p className="text-sm font-medium text-white truncate">
+                            <p className="text-sm font-medium text-gray-900 truncate">
                               {member.name}
                               {member.id === currentUserId && (
-                                <span className="ml-2 text-xs text-green-400">(You)</span>
+                                <span className="ml-2 text-xs text-green-600">(You)</span>
                               )}
                             </p>
                             {member.role === 'admin' && (
-                              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-blue-500 bg-opacity-20 text-blue-300 rounded-full">
+                              <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                                 Admin
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-300 truncate">{member.email}</p>
+                          <p className="text-sm text-gray-700 truncate">{member.email}</p>
                           {member.year !== 'N/A' && member.branch !== 'N/A' && (
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-gray-600">
                               {member.year} • {member.branch}
                             </p>
                           )}
@@ -396,11 +396,11 @@ const GroupDetail: React.FC = () => {
             <LocationTracker />
 
             {/* Actions Card */}
-            <div className="ridepool-card">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-700">
-                <h3 className="text-lg font-semibold text-white">Actions</h3>
+            <div className="ridepool-card animate-slideInLeft">
+              <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Actions</h3>
               </div>
-              <div className="border-t border-gray-700">
+              <div className="border-t border-gray-200">
                 <div className="px-4 py-5 sm:p-6 space-y-3">
                   <button
                     onClick={() => setShowFareCalculator(!showFareCalculator)}
@@ -461,20 +461,20 @@ const GroupDetail: React.FC = () => {
 
             {/* Fare Calculator */}
             {showFareCalculator && (
-              <div className="ridepool-card">
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-700">
-                  <h3 className="text-lg font-semibold text-white">Fare Calculator</h3>
+              <div className="ridepool-card animate-slideInLeft">
+                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Fare Calculator</h3>
                 </div>
-                <div className="border-t border-gray-700">
+                <div className="border-t border-gray-200">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Total Fare Amount (₹)
                         </label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span className="text-gray-400">₹</span>
+                            <span className="text-gray-500">₹</span>
                           </div>
                           <input
                             type="number"
@@ -488,12 +488,12 @@ const GroupDetail: React.FC = () => {
                       
                       <div className="bg-gradient-to-br from-blue-500 to-blue-600 bg-opacity-20 rounded-lg p-4 border border-blue-500 border-opacity-30">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium text-blue-300">Split among {group?.members.length} members:</span>
-                          <span className="text-lg font-bold text-blue-200">
+                          <span className="text-sm font-medium text-blue-800">Split among {group?.members.length} members:</span>
+                          <span className="text-lg font-bold text-blue-900">
                             ₹{(parseFloat(fareAmount) / (group?.members.length || 1)).toFixed(2) || '0.00'}
                           </span>
                         </div>
-                        <p className="text-xs text-blue-400 mt-1">per person</p>
+                        <p className="text-xs text-blue-700 mt-1">per person</p>
                       </div>
                       
                       <button
@@ -516,13 +516,13 @@ const GroupDetail: React.FC = () => {
             <GroupMap groupId={id || ''} groupData={group} />
             
             {/* Chat Container */}
-            <div className="ridepool-card flex flex-col h-[calc(100vh-400px)]">
+            <div className="ridepool-card flex flex-col h-[calc(100vh-400px)] animate-slideInRight">
               {/* Chat Header */}
-              <div className="px-4 py-4 sm:px-6 border-b border-gray-700">
+              <div className="px-4 py-4 sm:px-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-white">Group Chat</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Group Chat</h3>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-600">
                       {messages.length} messages
                     </span>
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -531,16 +531,16 @@ const GroupDetail: React.FC = () => {
               </div>
               
               {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-4 bg-gray-900 bg-opacity-30">
+              <div className="flex-1 overflow-y-auto p-4 bg-white bg-opacity-50">
                 <div className="space-y-3">
                   {messages.length === 0 ? (
                     <div className="text-center py-8">
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-800 mb-4">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                         <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                       </div>
-                      <p className="text-gray-400">No messages yet. Start the conversation!</p>
+                      <p className="text-gray-600">No messages yet. Start the conversation!</p>
                     </div>
                   ) : (
                     messages.map((message) => {
@@ -552,7 +552,7 @@ const GroupDetail: React.FC = () => {
                           {!isCurrentUser && (
                             <div className="flex items-start max-w-[70%]">
                               <div className="flex-shrink-0 mr-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
                                   <span className="text-white text-xs font-bold">
                                     {message.user.charAt(0).toUpperCase()}
                                   </span>
@@ -560,15 +560,15 @@ const GroupDetail: React.FC = () => {
                               </div>
                               <div className="flex flex-col">
                                 <div className="flex items-center space-x-2 mb-1">
-                                  <span className="text-xs font-medium text-gray-300">
+                                  <span className="text-xs font-medium text-gray-700">
                                     {message.user}
                                   </span>
                                   <span className="text-xs text-gray-500">
                                     {message.time}
                                   </span>
                                 </div>
-                                <div className="bg-gray-700 rounded-2xl rounded-tl-none px-4 py-2.5">
-                                  <p className="text-white text-sm whitespace-pre-wrap">
+                                <div className="bg-white rounded-2xl rounded-tl-none px-4 py-2.5 border border-gray-200 shadow-sm">
+                                  <p className="text-gray-900 text-sm whitespace-pre-wrap">
                                     {message.content}
                                   </p>
                                 </div>
@@ -584,11 +584,11 @@ const GroupDetail: React.FC = () => {
                                   <span className="text-xs text-gray-500">
                                     {message.time}
                                   </span>
-                                  <span className="text-xs font-medium text-green-400">
+                                  <span className="text-xs font-medium text-green-600">
                                     You
                                   </span>
                                 </div>
-                                <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl rounded-tr-none px-4 py-2.5">
+                                <div className="bg-gradient-to-br from-pink-500 to-purple-500 rounded-2xl rounded-tr-none px-4 py-2.5">
                                   <p className="text-white text-sm whitespace-pre-wrap">
                                     {message.content}
                                   </p>
@@ -612,7 +612,7 @@ const GroupDetail: React.FC = () => {
               </div>
               
               {/* Message Input */}
-              <div className="border-t border-gray-700 p-4">
+              <div className="border-t border-gray-200 p-4">
                 <div className="flex space-x-3">
                   <div className="flex-1">
                     <textarea
@@ -635,7 +635,7 @@ const GroupDetail: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-600">
                     Press Enter to send, Shift+Enter for new line
                   </span>
                   <span className="text-xs text-gray-500">

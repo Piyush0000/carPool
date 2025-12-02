@@ -94,27 +94,27 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background animations */}
       <div className="background-blob background-blob-1"></div>
       <div className="background-blob background-blob-2"></div>
       
       <div className="max-w-md w-full space-y-8 ridepool-card p-8 animate-fade-in">
         <div className="text-center">
-          <h2 className="mt-6 text-center text-3xl font-extrabold bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
+          <h2 className="mt-6 text-center text-3xl font-extrabold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent animate-gradient-shift">
             Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-300">
+          <p className="mt-2 text-center text-sm text-gray-700">
             Or{' '}
-            <Link to="/login" className="font-medium text-purple-400 hover:text-purple-300">
+            <Link to="/login" className="font-medium text-purple-600 hover:text-purple-500">
               sign in to your account
             </Link>
           </p>
         </div>
         
         {error && (
-          <div className="rounded-md bg-red-500 bg-opacity-20 p-4 border border-red-500 border-opacity-30">
-            <div className="text-sm text-red-300">
+          <div className="rounded-md bg-red-500 bg-opacity-20 p-4 border border-red-500 border-opacity-30 animate-shake">
+            <div className="text-sm text-red-700">
               {error}
             </div>
           </div>
@@ -123,7 +123,7 @@ const Register: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Full Name *
               </label>
               <input
@@ -133,13 +133,13 @@ const Register: React.FC = () => {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-400 rounded-md focus:z-10 sm:text-sm"
+                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-500 rounded-md focus:z-10 sm:text-sm"
                 placeholder="Full Name"
               />
             </div>
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email *
               </label>
               <input
@@ -150,13 +150,13 @@ const Register: React.FC = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-400 rounded-md focus:z-10 sm:text-sm"
+                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-500 rounded-md focus:z-10 sm:text-sm"
                 placeholder="Email"
               />
             </div>
             
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                 Phone Number *
               </label>
               <input
@@ -166,13 +166,13 @@ const Register: React.FC = () => {
                 required
                 value={formData.phone}
                 onChange={handleChange}
-                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-400 rounded-md focus:z-10 sm:text-sm"
+                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-500 rounded-md focus:z-10 sm:text-sm"
                 placeholder="Phone Number"
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password *
               </label>
               <input
@@ -183,13 +183,13 @@ const Register: React.FC = () => {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-400 rounded-md focus:z-10 sm:text-sm"
+                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-500 rounded-md focus:z-10 sm:text-sm"
                 placeholder="Password (min. 6 characters)"
               />
             </div>
             
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password *
               </label>
               <input
@@ -200,14 +200,14 @@ const Register: React.FC = () => {
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-400 rounded-md focus:z-10 sm:text-sm"
+                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-500 rounded-md focus:z-10 sm:text-sm"
                 placeholder="Confirm Password"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="gender" className="block text-sm font-medium text-gray-300">
+                <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
                   Gender *
                 </label>
                 <select
@@ -216,7 +216,7 @@ const Register: React.FC = () => {
                   value={formData.gender}
                   onChange={handleChange}
                   required
-                  className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-400 rounded-md focus:z-10 sm:text-sm"
+                  className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-500 rounded-md focus:z-10 sm:text-sm"
                 >
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
@@ -226,7 +226,7 @@ const Register: React.FC = () => {
               </div>
               
               <div>
-                <label htmlFor="year" className="block text-sm font-medium text-gray-300">
+                <label htmlFor="year" className="block text-sm font-medium text-gray-700">
                   Year *
                 </label>
                 <input
@@ -236,14 +236,14 @@ const Register: React.FC = () => {
                   required
                   value={formData.year}
                   onChange={handleChange}
-                  className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-400 rounded-md focus:z-10 sm:text-sm"
+                  className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-500 rounded-md focus:z-10 sm:text-sm"
                   placeholder="Year (e.g., 1st, 2nd, 3rd, 4th)"
                 />
               </div>
             </div>
             
             <div>
-              <label htmlFor="branch" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="branch" className="block text-sm font-medium text-gray-700">
                 Branch *
               </label>
               <input
@@ -253,7 +253,7 @@ const Register: React.FC = () => {
                 required
                 value={formData.branch}
                 onChange={handleChange}
-                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-400 rounded-md focus:z-10 sm:text-sm"
+                className="ridepool-input appearance-none relative block w-full px-3 py-2 placeholder-gray-500 rounded-md focus:z-10 sm:text-sm"
                 placeholder="Branch (e.g., Computer Science, Electronics)"
               />
             </div>
@@ -263,7 +263,7 @@ const Register: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="ridepool-btn ridepool-btn-primary group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+              className="ridepool-btn ridepool-btn-primary group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50 animate-pulse"
             >
               {loading ? (
                 <>
@@ -281,10 +281,10 @@ const Register: React.FC = () => {
           
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-600"></div>
+              <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800 text-gray-300">Or continue with</span>
+              <span className="px-2 bg-white text-gray-700">Or continue with</span>
             </div>
           </div>
           
@@ -302,9 +302,9 @@ const Register: React.FC = () => {
           </div>
         </form>
         
-        <div className="text-center text-sm text-gray-400 mt-4">
+        <div className="text-center text-sm text-gray-700 mt-4">
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-purple-400 hover:text-purple-300">
+          <Link to="/login" className="font-medium text-purple-600 hover:text-purple-500">
             Sign in
           </Link>
         </div>

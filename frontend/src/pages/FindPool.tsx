@@ -116,25 +116,25 @@ const FindPool: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Find Pool</h1>
-          <p className="mt-1 text-sm text-gray-300">Find students traveling on similar routes and schedules.</p>
+        <div className="mb-6 animate-fade-in">
+          <h1 className="text-2xl font-bold text-gray-900">Find Pool</h1>
+          <p className="mt-1 text-sm text-gray-700">Find students traveling on similar routes and schedules.</p>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Search form */}
           <div className="lg:col-span-1">
-            <div className="ridepool-card">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-700">
-                <h3 className="text-lg leading-6 font-medium text-white">Search Criteria</h3>
+            <div className="ridepool-card animate-slideInLeft">
+              <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">Search Criteria</h3>
               </div>
-              <div className="border-t border-gray-700">
+              <div className="border-t border-gray-200">
                 <form onSubmit={handleSubmit} className="px-4 py-5 sm:p-6">
                   <div className="space-y-6">
                     <div>
-                      <label htmlFor="pickup" className="block text-sm font-medium text-gray-300">
+                      <label htmlFor="pickup" className="block text-sm font-medium text-gray-700">
                         Pickup Location
                       </label>
                       <MapInput
@@ -147,7 +147,7 @@ const FindPool: React.FC = () => {
                     </div>
                     
                     <div>
-                      <label htmlFor="drop" className="block text-sm font-medium text-gray-300">
+                      <label htmlFor="drop" className="block text-sm font-medium text-gray-700">
                         Drop Location
                       </label>
                       <MapInput
@@ -161,7 +161,7 @@ const FindPool: React.FC = () => {
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="date" className="block text-sm font-medium text-gray-300">
+                        <label htmlFor="date" className="block text-sm font-medium text-gray-700">
                           Date
                         </label>
                         <input
@@ -176,7 +176,7 @@ const FindPool: React.FC = () => {
                       </div>
                       
                       <div>
-                        <label htmlFor="time" className="block text-sm font-medium text-gray-300">
+                        <label htmlFor="time" className="block text-sm font-medium text-gray-700">
                           Time
                         </label>
                         <input
@@ -192,7 +192,7 @@ const FindPool: React.FC = () => {
                     </div>
                     
                     <div>
-                      <label htmlFor="gender" className="block text-sm font-medium text-gray-300">
+                      <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
                         Gender Preference
                       </label>
                       <select
@@ -212,7 +212,7 @@ const FindPool: React.FC = () => {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="ridepool-btn ridepool-btn-primary w-full flex justify-center py-2 px-4 rounded-md text-sm font-medium disabled:opacity-50"
+                        className="ridepool-btn ridepool-btn-primary w-full flex justify-center py-2 px-4 rounded-md text-sm font-medium disabled:opacity-50 animate-pulse"
                       >
                         {loading ? (
                           <>
@@ -235,49 +235,49 @@ const FindPool: React.FC = () => {
           
           {/* Results */}
           <div className="lg:col-span-2">
-            <div className="ridepool-card">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-700">
-                <h3 className="text-lg leading-6 font-medium text-white">
+            <div className="ridepool-card animate-slideInRight">
+              <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
                   {searched ? 'Matching Students' : 'How to Find a Pool'}
                 </h3>
               </div>
-              <div className="border-t border-gray-700">
+              <div className="border-t border-gray-200">
                 {!searched ? (
                   <div className="px-4 py-12 sm:px-6 text-center">
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-white">Search for Matches</h3>
-                    <p className="mt-1 text-sm text-gray-300">
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">Search for Matches</h3>
+                    <p className="mt-1 text-sm text-gray-700">
                       Enter your pickup location, destination, date, and time to find students traveling on similar routes.
                     </p>
                   </div>
                 ) : loading ? (
                   <div className="px-4 py-12 sm:px-6">
                     <div className="flex justify-center">
-                      <div className="animate-pulse-glow w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></div>
+                      <div className="animate-pulse-glow w-16 h-16 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 animate-heartbeat"></div>
                     </div>
-                    <p className="mt-4 text-center text-sm text-gray-300">
+                    <p className="mt-4 text-center text-sm text-gray-700">
                       Finding matches for your route...
                     </p>
                   </div>
                 ) : matches.length > 0 ? (
-                  <ul className="divide-y divide-gray-700">
+                  <ul className="divide-y divide-gray-200">
                     {matches.map((match) => (
-                      <li key={match.id} className="hover:bg-gray-700 hover:bg-opacity-30 transition-colors duration-200">
+                      <li key={match.id} className="hover:bg-white hover:bg-opacity-70 transition-colors duration-200">
                         <div className="px-4 py-5 sm:px-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
                               <div className="flex-shrink-0">
-                                <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl w-16 h-16 flex items-center justify-center">
+                                <div className="bg-gradient-to-br from-pink-500 to-purple-500 rounded-xl w-16 h-16 flex items-center justify-center">
                                   <span className="text-white font-bold text-xl">
                                     {match.user.name.charAt(0)}
                                   </span>
                                 </div>
                               </div>
                               <div className="ml-4">
-                                <h4 className="text-lg font-medium text-white">{match.user.name}</h4>
-                                <p className="text-sm text-gray-300">
+                                <h4 className="text-lg font-medium text-gray-900">{match.user.name}</h4>
+                                <p className="text-sm text-gray-700">
                                   {match.user.year} • {match.user.branch}
                                 </p>
                               </div>
@@ -285,10 +285,10 @@ const FindPool: React.FC = () => {
                             
                             <div className="flex items-center">
                               <div className="text-right mr-4">
-                                <p className="text-sm font-medium text-white">
+                                <p className="text-sm font-medium text-gray-900">
                                   Match Score: {match.matchScore}%
                                 </p>
-                                <p className="text-xs text-gray-300">
+                                <p className="text-xs text-gray-700">
                                   {Math.round(match.distanceSimilarity.pickup/1000)}km pickup, {Math.round(match.distanceSimilarity.drop/1000)}km drop
                                 </p>
                               </div>
@@ -304,18 +304,18 @@ const FindPool: React.FC = () => {
                           
                           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="bg-gradient-to-br from-blue-500 to-blue-600 bg-opacity-20 rounded-lg p-3 border border-blue-500 border-opacity-30">
-                              <p className="text-xs font-medium text-blue-300">ROUTE</p>
-                              <p className="mt-1 text-sm text-white">{match.route.pickup} → {match.route.drop}</p>
+                              <p className="text-xs font-medium text-blue-700">ROUTE</p>
+                              <p className="mt-1 text-sm text-gray-900">{match.route.pickup} → {match.route.drop}</p>
                             </div>
                             
                             <div className="bg-gradient-to-br from-green-500 to-green-600 bg-opacity-20 rounded-lg p-3 border border-green-500 border-opacity-30">
-                              <p className="text-xs font-medium text-green-300">DATE & TIME</p>
-                              <p className="mt-1 text-sm text-white">{match.dateTime}</p>
+                              <p className="text-xs font-medium text-green-700">DATE & TIME</p>
+                              <p className="mt-1 text-sm text-gray-900">{match.dateTime}</p>
                             </div>
                             
                             <div className="bg-gradient-to-br from-purple-500 to-purple-600 bg-opacity-20 rounded-lg p-3 border border-purple-500 border-opacity-30">
-                              <p className="text-xs font-medium text-purple-300">SIMILARITY</p>
-                              <p className="mt-1 text-sm text-white">
+                              <p className="text-xs font-medium text-purple-700">SIMILARITY</p>
+                              <p className="mt-1 text-sm text-gray-900">
                                 ±{match.timeSimilarity} min time difference
                               </p>
                             </div>
@@ -329,8 +329,8 @@ const FindPool: React.FC = () => {
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-white">No matches found</h3>
-                    <p className="mt-1 text-sm text-gray-300">
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No matches found</h3>
+                    <p className="mt-1 text-sm text-gray-700">
                       Be the first to create a group for this route!
                     </p>
                     <div className="mt-6">

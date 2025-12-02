@@ -173,18 +173,18 @@ const GroupsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 animate-fade-in">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-white">Student Groups</h1>
-              <p className="mt-2 text-gray-300">Connect with fellow students traveling on similar routes</p>
+              <h1 className="text-3xl font-bold text-gray-900">Student Groups</h1>
+              <p className="mt-2 text-gray-700">Connect with fellow students traveling on similar routes</p>
             </div>
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="ridepool-btn ridepool-btn-primary px-6 py-3 rounded-lg font-semibold hover-lift"
+              className="ridepool-btn ridepool-btn-primary px-6 py-3 rounded-lg font-semibold hover-lift animate-pulse"
             >
               {showCreateForm ? 'Cancel' : 'Create Group'}
             </button>
@@ -193,18 +193,18 @@ const GroupsPage: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 border-opacity-30">
-            <p className="text-red-200">{error}</p>
+          <div className="mb-6 p-4 rounded-lg bg-red-500 bg-opacity-20 border border-red-500 border-opacity-30 animate-shake">
+            <p className="text-red-700">{error}</p>
           </div>
         )}
 
         {/* Create Group Form */}
         {showCreateForm && (
-          <div className="mb-8 ridepool-card p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Create New Group</h2>
+          <div className="mb-8 ridepool-card p-6 animate-slideInTop">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Create New Group</h2>
             <form onSubmit={handleCreateGroup} className="space-y-4">
               <div>
-                <label htmlFor="groupName" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="groupName" className="block text-sm font-medium text-gray-700 mb-1">
                   Group Name *
                 </label>
                 <input
@@ -219,7 +219,7 @@ const GroupsPage: React.FC = () => {
               </div>
               
               <div>
-                <label htmlFor="groupDescription" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="groupDescription" className="block text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
                 <textarea
@@ -234,7 +234,7 @@ const GroupsPage: React.FC = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="pickupAddress" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="pickupAddress" className="block text-sm font-medium text-gray-700 mb-1">
                     Pickup Location *
                   </label>
                   <input
@@ -249,7 +249,7 @@ const GroupsPage: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="dropAddress" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="dropAddress" className="block text-sm font-medium text-gray-700 mb-1">
                     Drop Location *
                   </label>
                   <input
@@ -265,7 +265,7 @@ const GroupsPage: React.FC = () => {
               </div>
               
               <div>
-                <label htmlFor="seatCount" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="seatCount" className="block text-sm font-medium text-gray-700 mb-1">
                   Number of Seats
                 </label>
                 <select
@@ -301,13 +301,13 @@ const GroupsPage: React.FC = () => {
         )}
 
         {/* Groups List */}
-        <div className="ridepool-card p-6">
+        <div className="ridepool-card p-6 animate-fade-in">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-white">Available Groups</h2>
+            <h2 className="text-xl font-bold text-gray-900">Available Groups</h2>
             <button
               onClick={loadGroups}
               disabled={loading}
-              className="text-purple-400 hover:text-purple-300 text-sm font-medium"
+              className="text-purple-600 hover:text-purple-500 text-sm font-medium"
             >
               Refresh
             </button>
@@ -322,8 +322,8 @@ const GroupsPage: React.FC = () => {
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-white">No groups found</h3>
-              <p className="mt-1 text-sm text-gray-300">
+              <h3 className="mt-2 text-sm font-medium text-gray-700">No groups found</h3>
+              <p className="mt-1 text-sm text-gray-500">
                 Get started by creating a new group.
               </p>
             </div>
@@ -332,13 +332,13 @@ const GroupsPage: React.FC = () => {
               {groups.map((group) => (
                 <div 
                   key={group._id} 
-                  className="ridepool-card p-5 hover:bg-gray-700 hover:bg-opacity-30 transition-all duration-200 cursor-pointer"
+                  className="ridepool-card p-5 hover:bg-white hover:bg-opacity-70 transition-all duration-200 cursor-pointer animate-slideInLeft"
                   onClick={() => goToGroupDetail(group._id)}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-medium text-white">{group.groupName}</h3>
-                      <p className="mt-1 text-sm text-gray-300 line-clamp-2">
+                      <h3 className="text-lg font-medium text-gray-900">{group.groupName}</h3>
+                      <p className="mt-1 text-sm text-gray-700 line-clamp-2">
                         {group.description || 'No description provided'}
                       </p>
                     </div>
@@ -351,9 +351,9 @@ const GroupsPage: React.FC = () => {
                     </span>
                   </div>
                   
-                  <div className="mt-3 text-sm text-gray-400">
+                  <div className="mt-3 text-sm text-gray-600">
                     <div className="flex items-center">
-                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                       </svg>
                       {group.route.pickup.address} → {group.route.drop.address}
@@ -361,8 +361,8 @@ const GroupsPage: React.FC = () => {
                   </div>
                   
                   <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center text-sm text-gray-400">
-                      <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                       </svg>
                       {group.members.length}/{group.seatCount} seats
