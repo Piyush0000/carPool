@@ -6,7 +6,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import http from 'http';
 import { Server } from 'socket.io';
-import config from './config';
 
 // Load environment variables
 dotenv.config();
@@ -22,16 +21,25 @@ import locationRoutes from './routes/location.routes';
 import notificationRoutes from './routes/notification.routes';
 import geoapifyRoutes from './routes/geoapify.routes';
 
+// **FIXED: Define allowed origins properly - Add ALL needed origins**
+const allowedOrigins = [
+  'http://localhost:5173',  // Local development (Vite)
+  'http://localhost:3000',  // Local development (React)
+  'https://car-pool-flax.vercel.app',  // Your Vercel app
+  'https://carpool-2-omli.onrender.com',  // Your Render backend (for WebSocket)
+];
+
 // Initialize app
 const app = express();
 const server = http.createServer(app);
 
-// Socket.io configuration with enhanced features
+// **FIXED: Simplify Socket.io CORS configuration**
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
   },
   pingTimeout: 60000,
   pingInterval: 25000
@@ -40,13 +48,44 @@ const io = new Server(server, {
 // Make io accessible to routes
 app.set('io', io);
 
-// Security middleware
+// **FIXED: Update Helmet configuration to fix Cross-Origin-Opener-Policy warnings**
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginOpenerPolicy: false, // Disable COOP to fix window.closed warnings
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false, // Disable COEP for better compatibility
+  contentSecurityPolicy: false // Disable CSP for now, can configure later
 }));
 
-// CORS configuration
-app.use(cors(config.security.cors));
+// **FIXED: Simplify CORS configuration - Direct array approach**
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  optionsSuccessStatus: 200,
+  maxAge: 86400 // 24 hours for preflight cache
+}));
+
+// **ADDED: Manual CORS headers middleware for better control**
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+  
+  // Set CORS headers dynamically
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -55,7 +94,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // MongoDB connection
 const connectDB = async (): Promise<void> => {
   try {
-    await mongoose.connect(config.mongodb.uri);
+    const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/carpool';
+    await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB');
     if (mongoose.connection.db) {
       console.log(`📊 Database: ${mongoose.connection.db.databaseName}`);
@@ -69,6 +109,12 @@ const connectDB = async (): Promise<void> => {
 // Connect to database
 connectDB();
 
+// Log all incoming requests for debugging
+app.use((req: Request, res: Response, next: NextFunction) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin}`);
+  next();
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -80,7 +126,7 @@ app.use('/api/location', locationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/geoapify', geoapifyRoutes);
 
-// Health check endpoint
+// Health check endpoint with detailed CORS info
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -88,7 +134,37 @@ app.get('/api/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    cors: {
+      allowedOrigins: allowedOrigins,
+      requestOrigin: req.headers.origin || 'none',
+      isOriginAllowed: req.headers.origin ? allowedOrigins.includes(req.headers.origin) : true
+    },
+    endpoints: {
+      auth: '/api/auth',
+      users: '/api/users',
+      pool: '/api/pool',
+      group: '/api/group',
+      chat: '/api/chat',
+      location: '/api/location',
+      notifications: '/api/notifications',
+      geoapify: '/api/geoapify',
+      admin: '/api/admin'
+    }
+  });
+});
+
+// Test CORS endpoint
+app.get('/api/test-cors', (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: 'CORS test successful',
+    origin: req.headers.origin,
+    headers: req.headers,
+    corsHeaders: {
+      'Access-Control-Allow-Origin': req.headers.origin,
+      'Access-Control-Allow-Credentials': 'true'
+    }
   });
 });
 
@@ -98,6 +174,8 @@ app.get('/', (req: Request, res: Response) => {
     message: 'Campus Cab Pool API Server',
     version: '1.0.0',
     status: 'running',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
     endpoints: {
       auth: '/api/auth',
       users: '/api/users',
@@ -107,7 +185,12 @@ app.get('/', (req: Request, res: Response) => {
       notifications: '/api/notifications',
       geoapify: '/api/geoapify',
       admin: '/api/admin',
-      health: '/api/health'
+      health: '/api/health',
+      testCors: '/api/test-cors'
+    },
+    cors: {
+      allowedOrigins: allowedOrigins,
+      currentOrigin: req.headers.origin
     }
   });
 });
@@ -116,7 +199,7 @@ app.get('/', (req: Request, res: Response) => {
 const userSockets = new Map<string, string>(); // userId -> socketId mapping
 
 io.on('connection', (socket) => {
-  console.log('🔌 User connected:', socket.id);
+  console.log('🔌 User connected:', socket.id, 'Origin:', socket.handshake.headers.origin);
 
   // User authentication and registration
   socket.on('register_user', (userId: string) => {
@@ -299,7 +382,11 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({
     success: false,
-    message: `Route ${req.method} ${req.originalUrl} not found on this server`
+    message: `Route ${req.method} ${req.originalUrl} not found on this server`,
+    cors: {
+      allowedOrigins: allowedOrigins,
+      yourOrigin: req.headers.origin
+    }
   });
 });
 
@@ -328,7 +415,7 @@ process.on('SIGTERM', () => {
   });
 });
 
-const PORT = config.server.port;
+const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log(`
@@ -337,6 +424,8 @@ server.listen(PORT, () => {
 🌐 URL: http://localhost:${PORT}
 📚 API Docs: http://localhost:${PORT}/api/health
 🔌 WebSocket: ws://localhost:${PORT}
+🌍 Allowed Origins: ${allowedOrigins.join(', ')}
+📊 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connected' : '❌ Disconnected'}
   `);
 });
 

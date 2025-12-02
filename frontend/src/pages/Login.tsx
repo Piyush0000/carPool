@@ -38,7 +38,8 @@ const Login: React.FC = () => {
       await signInWithGoogle();
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Google Sign-In is not configured for this deployment. Please use email/password login instead.');
+      setError(err.message || 'Google Sign-In is not available. Please use email/password login instead.');
+      console.error('Google Sign-In error:', err);
     } finally {
       setLoading(false);
     }
