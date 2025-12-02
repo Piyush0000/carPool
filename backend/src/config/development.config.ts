@@ -1,4 +1,14 @@
-// Development configuration settings
+// backend/src/config/development.config.ts
+
+// Define allowed origins array
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',') 
+  : [
+      'http://localhost:5173',
+      'https://car-pool-flax.vercel.app',
+      'https://carpool-2-omli.onrender.com'
+    ];
+
 export const developmentConfig = {
   // MongoDB configuration
   mongodb: {
@@ -16,9 +26,12 @@ export const developmentConfig = {
       expiresIn: process.env.JWT_EXPIRE || '7d'
     },
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: allowedOrigins, // Now accepts multiple origins
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+      exposedHeaders: ['Content-Range', 'X-Content-Range'],
+      optionsSuccessStatus: 200
     }
   },
   

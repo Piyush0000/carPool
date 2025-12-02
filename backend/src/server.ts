@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import http from 'http';
 import { Server } from 'socket.io';
+import { developmentConfig } from './config/development.config'; // Import from correct path
 
 // Load environment variables
 dotenv.config();
@@ -21,24 +22,19 @@ import locationRoutes from './routes/location.routes';
 import notificationRoutes from './routes/notification.routes';
 import geoapifyRoutes from './routes/geoapify.routes';
 
-// **FIXED: Define allowed origins properly - Add ALL needed origins**
-const allowedOrigins = [
-  'http://localhost:5173',  // Local development (Vite)
-  'http://localhost:3000',  // Local development (React)
-  'https://car-pool-flax.vercel.app',  // Your Vercel app
-  'https://carpool-2-omli.onrender.com',  // Your Render backend (for WebSocket)
-];
+// Use config from development.config.ts
+const config = developmentConfig;
 
 // Initialize app
 const app = express();
 const server = http.createServer(app);
 
-// **FIXED: Simplify Socket.io CORS configuration**
+// Socket.io configuration using config
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true,
+    origin: config.security.cors.origin,
+    methods: config.security.cors.methods,
+    credentials: config.security.cors.credentials,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
   },
   pingTimeout: 60000,
@@ -48,33 +44,31 @@ const io = new Server(server, {
 // Make io accessible to routes
 app.set('io', io);
 
-// **FIXED: Update Helmet configuration to fix Cross-Origin-Opener-Policy warnings**
+// Security middleware with fixed COOP policy
 app.use(helmet({
-  crossOriginOpenerPolicy: false, // Disable COOP to fix window.closed warnings
+  crossOriginOpenerPolicy: false, // Disable to fix window.closed warnings
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginEmbedderPolicy: false, // Disable COEP for better compatibility
-  contentSecurityPolicy: false // Disable CSP for now, can configure later
+  crossOriginEmbedderPolicy: false // Disable for better compatibility
 }));
 
-// **FIXED: Simplify CORS configuration - Direct array approach**
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  optionsSuccessStatus: 200,
-  maxAge: 86400 // 24 hours for preflight cache
-}));
+// CORS configuration from config
+app.use(cors(config.security.cors));
 
-// **ADDED: Manual CORS headers middleware for better control**
+// Additional CORS headers for better compatibility
 app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
+  const allowedOrigins = config.security.cors.origin;
   
-  // Set CORS headers dynamically
-  if (origin && allowedOrigins.includes(origin)) {
+  // Check if origin is allowed
+  if (origin && Array.isArray(allowedOrigins) && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (origin && typeof allowedOrigins === 'string' && allowedOrigins === origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (origin && typeof allowedOrigins === 'function') {
+    // Handle function-based CORS
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
+  
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
@@ -91,11 +85,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// MongoDB connection
+// MongoDB connection using config
 const connectDB = async (): Promise<void> => {
   try {
-    const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/carpool';
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(config.mongodb.uri, config.mongodb.options);
     console.log('✅ Connected to MongoDB');
     if (mongoose.connection.db) {
       console.log(`📊 Database: ${mongoose.connection.db.databaseName}`);
@@ -109,7 +102,7 @@ const connectDB = async (): Promise<void> => {
 // Connect to database
 connectDB();
 
-// Log all incoming requests for debugging
+// Log incoming requests for debugging
 app.use((req: Request, res: Response, next: NextFunction) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin}`);
   next();
@@ -126,30 +119,18 @@ app.use('/api/location', locationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/geoapify', geoapifyRoutes);
 
-// Health check endpoint with detailed CORS info
+// Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'Server is running healthy',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: config.server.environment,
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     uptime: process.uptime(),
     cors: {
-      allowedOrigins: allowedOrigins,
-      requestOrigin: req.headers.origin || 'none',
-      isOriginAllowed: req.headers.origin ? allowedOrigins.includes(req.headers.origin) : true
-    },
-    endpoints: {
-      auth: '/api/auth',
-      users: '/api/users',
-      pool: '/api/pool',
-      group: '/api/group',
-      chat: '/api/chat',
-      location: '/api/location',
-      notifications: '/api/notifications',
-      geoapify: '/api/geoapify',
-      admin: '/api/admin'
+      allowedOrigins: config.security.cors.origin,
+      requestOrigin: req.headers.origin || 'none'
     }
   });
 });
@@ -160,11 +141,12 @@ app.get('/api/test-cors', (req: Request, res: Response) => {
     success: true,
     message: 'CORS test successful',
     origin: req.headers.origin,
-    headers: req.headers,
-    corsHeaders: {
-      'Access-Control-Allow-Origin': req.headers.origin,
-      'Access-Control-Allow-Credentials': 'true'
-    }
+    allowedOrigins: config.security.cors.origin,
+    isAllowed: req.headers.origin 
+      ? (Array.isArray(config.security.cors.origin) 
+          ? config.security.cors.origin.includes(req.headers.origin)
+          : config.security.cors.origin === req.headers.origin)
+      : true
   });
 });
 
@@ -174,32 +156,19 @@ app.get('/', (req: Request, res: Response) => {
     message: 'Campus Cab Pool API Server',
     version: '1.0.0',
     status: 'running',
-    environment: process.env.NODE_ENV || 'development',
+    environment: config.server.environment,
     timestamp: new Date().toISOString(),
-    endpoints: {
-      auth: '/api/auth',
-      users: '/api/users',
-      pools: '/api/pool',
-      groups: '/api/group',
-      chat: '/api/chat',
-      notifications: '/api/notifications',
-      geoapify: '/api/geoapify',
-      admin: '/api/admin',
-      health: '/api/health',
-      testCors: '/api/test-cors'
-    },
     cors: {
-      allowedOrigins: allowedOrigins,
-      currentOrigin: req.headers.origin
+      allowedOrigins: config.security.cors.origin
     }
   });
 });
 
-// Socket.io connection handling with enhanced features
-const userSockets = new Map<string, string>(); // userId -> socketId mapping
+// Socket.io connection handling
+const userSockets = new Map<string, string>();
 
 io.on('connection', (socket) => {
-  console.log('🔌 User connected:', socket.id, 'Origin:', socket.handshake.headers.origin);
+  console.log('🔌 User connected:', socket.id);
 
   // User authentication and registration
   socket.on('register_user', (userId: string) => {
@@ -213,7 +182,6 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     console.log(`👥 User ${socket.id} joined room ${roomId}`);
     
-    // Notify others in the room
     socket.to(roomId).emit('user_joined', {
       socketId: socket.id,
       timestamp: new Date()
@@ -225,7 +193,6 @@ io.on('connection', (socket) => {
     socket.leave(roomId);
     console.log(`👋 User ${socket.id} left room ${roomId}`);
     
-    // Notify others in the room
     socket.to(roomId).emit('user_left', {
       socketId: socket.id,
       timestamp: new Date()
@@ -261,10 +228,8 @@ io.on('connection', (socket) => {
   // Handle user location updates
   socket.on('location_update', (data: { userId: string; location: any; groupId?: string }) => {
     if (data.groupId) {
-      // Send to specific group
       socket.to(`group_${data.groupId}`).emit('user_location_updated', data);
     } else {
-      // Broadcast to all
       socket.broadcast.emit('user_location_updated', data);
     }
   });
@@ -302,7 +267,6 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('❌ User disconnected:', socket.id);
     
-    // Remove from userSockets map
     for (const [userId, socketId] of userSockets.entries()) {
       if (socketId === socket.id) {
         userSockets.delete(userId);
@@ -321,11 +285,10 @@ io.on('connection', (socket) => {
 // Export io for use in controllers
 export { io };
 
-// Centralized error handling middleware
+// Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('🚨 Error Stack:', err.stack);
 
-  // Mongoose validation error
   if (err.name === 'ValidationError') {
     const errors = Object.values(err.errors).map((e: any) => e.message);
     return res.status(400).json({
@@ -335,7 +298,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  // Mongoose duplicate key error
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
     return res.status(400).json({
@@ -344,7 +306,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  // Mongoose CastError (invalid ObjectId)
   if (err.name === 'CastError') {
     return res.status(400).json({
       success: false,
@@ -352,7 +313,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  // JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       success: false,
@@ -367,14 +327,13 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     });
   }
 
-  // Default error
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
   return res.status(statusCode).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(config.server.environment === 'development' && { stack: err.stack })
   });
 });
 
@@ -382,18 +341,13 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({
     success: false,
-    message: `Route ${req.method} ${req.originalUrl} not found on this server`,
-    cors: {
-      allowedOrigins: allowedOrigins,
-      yourOrigin: req.headers.origin
-    }
+    message: `Route ${req.method} ${req.originalUrl} not found on this server`
   });
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err: Error) => {
   console.log('🚨 Unhandled Rejection:', err.name, err.message);
-  console.log('💥 Shutting down server...');
   server.close(() => {
     process.exit(1);
   });
@@ -402,7 +356,6 @@ process.on('unhandledRejection', (err: Error) => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (err: Error) => {
   console.log('🚨 Uncaught Exception:', err.name, err.message);
-  console.log('💥 Shutting down server...');
   process.exit(1);
 });
 
@@ -415,16 +368,16 @@ process.on('SIGTERM', () => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = config.server.port;
 
 server.listen(PORT, () => {
   console.log(`
-🚀 Server running in ${process.env.NODE_ENV || 'development'} mode
+🚀 Server running in ${config.server.environment} mode
 📍 Port: ${PORT}
 🌐 URL: http://localhost:${PORT}
 📚 API Docs: http://localhost:${PORT}/api/health
 🔌 WebSocket: ws://localhost:${PORT}
-🌍 Allowed Origins: ${allowedOrigins.join(', ')}
+🌍 Allowed Origins: ${JSON.stringify(config.security.cors.origin)}
 📊 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connected' : '❌ Disconnected'}
   `);
 });
