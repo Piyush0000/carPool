@@ -23,14 +23,16 @@ export interface IUser extends Document {
     };
     studentIdUrl?: string;
     role: 'student' | 'admin';
+    emailVerificationToken?: string;
+    emailVerificationExpires?: Date;
     isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
-declare const User: mongoose.Model<IUser, {}, {}, {}, mongoose.Document<unknown, {}, IUser, {}, mongoose.DefaultSchemaOptions> & IUser & Required<{
+declare const User: mongoose.Model<IUser, {}, {}, {}, mongoose.Document<unknown, {}, IUser, {}, {}> & IUser & Required<{
     _id: mongoose.Types.ObjectId;
 }> & {
     __v: number;
-}, any, IUser>;
+}, any>;
 export default User;
 //# sourceMappingURL=User.model.d.ts.map

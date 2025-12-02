@@ -47,7 +47,6 @@ const PoolRequestSchema = new mongoose_1.Schema({
         },
         coordinates: {
             type: [Number],
-            index: '2dsphere',
             required: true
         }
     },
@@ -58,7 +57,6 @@ const PoolRequestSchema = new mongoose_1.Schema({
         },
         coordinates: {
             type: [Number],
-            index: '2dsphere',
             required: true
         }
     },

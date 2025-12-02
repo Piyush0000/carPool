@@ -36,7 +36,7 @@ const RidePoolDashboard: React.FC = () => {
   };
 
   const handleCreateGroup = () => {
-    navigate('/find-pool');
+    navigate('/groups');
   };
 
   const handleJoinGroup = () => {
@@ -184,7 +184,7 @@ const RidePoolDashboard: React.FC = () => {
               <div className="flex items-center justify-between mb-10">
                 <h2 className="text-2xl font-bold text-white">Recent Groups</h2>
                 <button 
-                  onClick={() => navigate('/my-groups')}
+                  onClick={() => navigate('/groups')}
                   className="text-green-400 hover:text-green-300 text-lg font-medium"
                 >
                   View All

@@ -16,16 +16,18 @@ export interface IGroup extends Document {
             coordinates: [number, number];
         };
     };
+    dateTime: Date;
     seatCount: number;
     status: 'Open' | 'Locked' | 'Completed';
     chatRoomId: string;
+    description?: string;
     createdAt: Date;
     updatedAt: Date;
 }
-declare const Group: mongoose.Model<IGroup, {}, {}, {}, mongoose.Document<unknown, {}, IGroup, {}, mongoose.DefaultSchemaOptions> & IGroup & Required<{
+declare const Group: mongoose.Model<IGroup, {}, {}, {}, mongoose.Document<unknown, {}, IGroup, {}, {}> & IGroup & Required<{
     _id: mongoose.Types.ObjectId;
 }> & {
     __v: number;
-}, any, IGroup>;
+}, any>;
 export default Group;
 //# sourceMappingURL=Group.model.d.ts.map

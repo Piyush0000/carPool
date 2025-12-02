@@ -58,19 +58,27 @@ const GroupSchema = new mongoose_1.Schema({
         }],
     route: {
         pickup: {
-            address: String,
+            address: {
+                type: String,
+                required: true
+            },
             coordinates: {
-                type: [Number],
-                index: '2dsphere'
+                type: [Number]
             }
         },
         drop: {
-            address: String,
+            address: {
+                type: String,
+                required: true
+            },
             coordinates: {
-                type: [Number],
-                index: '2dsphere'
+                type: [Number]
             }
         }
+    },
+    dateTime: {
+        type: Date,
+        required: true
     },
     seatCount: {
         type: Number,
@@ -87,6 +95,10 @@ const GroupSchema = new mongoose_1.Schema({
         type: String,
         required: true,
         unique: true
+    },
+    description: {
+        type: String,
+        trim: true
     }
 }, {
     timestamps: true

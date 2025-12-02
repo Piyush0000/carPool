@@ -10,10 +10,10 @@ export interface INotification extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
-declare const Notification: mongoose.Model<INotification, {}, {}, {}, mongoose.Document<unknown, {}, INotification, {}, mongoose.DefaultSchemaOptions> & INotification & Required<{
+declare const Notification: mongoose.Model<INotification, {}, {}, {}, mongoose.Document<unknown, {}, INotification, {}, {}> & INotification & Required<{
     _id: mongoose.Types.ObjectId;
 }> & {
     __v: number;
-}, any, INotification>;
+}, any>;
 export default Notification;
 //# sourceMappingURL=Notification.model.d.ts.map

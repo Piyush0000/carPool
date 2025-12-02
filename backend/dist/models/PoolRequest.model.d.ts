@@ -19,10 +19,10 @@ export interface IPoolRequest extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
-declare const PoolRequest: mongoose.Model<IPoolRequest, {}, {}, {}, mongoose.Document<unknown, {}, IPoolRequest, {}, mongoose.DefaultSchemaOptions> & IPoolRequest & Required<{
+declare const PoolRequest: mongoose.Model<IPoolRequest, {}, {}, {}, mongoose.Document<unknown, {}, IPoolRequest, {}, {}> & IPoolRequest & Required<{
     _id: mongoose.Types.ObjectId;
 }> & {
     __v: number;
-}, any, IPoolRequest>;
+}, any>;
 export default PoolRequest;
 //# sourceMappingURL=PoolRequest.model.d.ts.map
