@@ -41,6 +41,7 @@ const GroupsPage: React.FC = () => {
   const [pickupCoordinates, setPickupCoordinates] = useState<[number, number] | null>(null);
   const [dropCoordinates, setDropCoordinates] = useState<[number, number] | null>(null);
   const [preferredGender, setPreferredGender] = useState('Any');
+  const [groupDateTime, setGroupDateTime] = useState('');
   const [seatCount, setSeatCount] = useState(4);
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
   const [showSearchForm, setShowSearchForm] = useState(true);
@@ -97,6 +98,7 @@ const GroupsPage: React.FC = () => {
           address: dropAddress,
           coordinates: dropCoordinates
         },
+        dateTime: groupDateTime,
         preferredGender
       });
       
@@ -120,6 +122,7 @@ const GroupsPage: React.FC = () => {
     setPickupCoordinates(null);
     setDropCoordinates(null);
     setPreferredGender('Any');
+    setGroupDateTime('');
   };
 
   // Create a new group
@@ -153,6 +156,7 @@ const GroupsPage: React.FC = () => {
             coordinates: dropCoordinates
           }
         },
+        dateTime: groupDateTime,
         seatCount
       });
       
@@ -173,6 +177,7 @@ const GroupsPage: React.FC = () => {
       setPickupCoordinates(null);
       setDropCoordinates(null);
       setSeatCount(4);
+      setGroupDateTime('');
       setShowCreateForm(false);
       
       // Show success message
@@ -299,6 +304,44 @@ const GroupsPage: React.FC = () => {
                 </div>
               </div>
               
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="searchDate" className="block text-sm font-medium text-gray-700 mb-1">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    id="searchDate"
+                    value={groupDateTime ? new Date(groupDateTime).toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      const date = e.target.value;
+                      const currentTime = groupDateTime ? new Date(groupDateTime).toTimeString().substring(0, 5) : '08:00';
+                      setGroupDateTime(`${date}T${currentTime}`);
+                    }}
+                    className="ridepool-input w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="searchTime" className="block text-sm font-medium text-gray-700 mb-1">
+                    Time *
+                  </label>
+                  <input
+                    type="time"
+                    id="searchTime"
+                    value={groupDateTime ? new Date(groupDateTime).toTimeString().substring(0, 5) : '08:00'}
+                    onChange={(e) => {
+                      const time = e.target.value;
+                      const currentDate = groupDateTime ? new Date(groupDateTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                      setGroupDateTime(`${currentDate}T${time}`);
+                    }}
+                    className="ridepool-input w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
+                    required
+                  />
+                </div>
+              </div>
+              
               <div>
                 <label htmlFor="preferredGender" className="block text-sm font-medium text-gray-700 mb-1">
                   Gender Preference
@@ -404,6 +447,44 @@ const GroupsPage: React.FC = () => {
                 </div>
               </div>
               
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="groupDate" className="block text-sm font-medium text-gray-700 mb-1">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    id="groupDate"
+                    value={groupDateTime ? new Date(groupDateTime).toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      const date = e.target.value;
+                      const currentTime = groupDateTime ? new Date(groupDateTime).toTimeString().substring(0, 5) : '08:00';
+                      setGroupDateTime(`${date}T${currentTime}`);
+                    }}
+                    className="ridepool-input w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="groupTime" className="block text-sm font-medium text-gray-700 mb-1">
+                    Time *
+                  </label>
+                  <input
+                    type="time"
+                    id="groupTime"
+                    value={groupDateTime ? new Date(groupDateTime).toTimeString().substring(0, 5) : '08:00'}
+                    onChange={(e) => {
+                      const time = e.target.value;
+                      const currentDate = groupDateTime ? new Date(groupDateTime).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                      setGroupDateTime(`${currentDate}T${time}`);
+                    }}
+                    className="ridepool-input w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
+                    required
+                  />
+                </div>
+              </div>
+              
               <div>
                 <label htmlFor="seatCount" className="block text-sm font-medium text-gray-700 mb-1">
                   Number of Seats
@@ -485,6 +566,12 @@ const GroupsPage: React.FC = () => {
                         <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                       </svg>
                       {Math.round(group.distanceSimilarity.pickup/1000)}km pickup, {Math.round(group.distanceSimilarity.drop/1000)}km drop
+                    </div>
+                    <div className="flex items-center mt-1">
+                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      ±{Math.round(group.timeDifference)} min time difference
                     </div>
                   </div>
                   
@@ -613,6 +700,12 @@ const GroupsPage: React.FC = () => {
                         <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                       </svg>
                       {group.route.pickup.address} → {group.route.drop.address}
+                    </div>
+                    <div className="flex items-center mt-1">
+                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                      {group.dateTime ? new Date(group.dateTime).toLocaleString() : 'Not specified'}
                     </div>
                   </div>
                   

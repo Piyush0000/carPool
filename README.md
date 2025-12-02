@@ -64,18 +64,42 @@ cabGroups/
 ## 🚀 Deployment
 
 ### Backend (Render)
-1. Set environment variables:
+1. Push your code to GitHub
+2. Go to [render.com](https://render.com) and create a new Web Service
+3. Connect your GitHub repository
+4. Configure the service:
+   - **Name**: campus-cab-pool-backend
+   - **Environment**: Node
+   - **Build Command**: `cd backend && npm install`
+   - **Start Command**: `npm run start`
+   - **Branch**: main
+   - **Root Directory**: /
+5. Set Environment Variables:
    ```
-   MONGODB_URI=your_mongodb_connection_string
+   MONGODB_URI=mongodb+srv://piyushrathore:piyushcodes@cluster0.wiqfcjk.mongodb.net/carpoolgrp?retryWrites=true&w=majority&appName=Cluster0
+   JWT_SECRET=your_secure_jwt_secret_here
    NODE_ENV=production
-   JWT_SECRET=your_jwt_secret
    PORT=5000
+   GEOAPIFY_API_KEY=86ddba99f19b4a509f47b4c94c073f80
    ```
-2. Deploy using Render's GitHub integration
+6. Click "Create Web Service" and wait for deployment
 
 ### Frontend (Vercel)
-1. Update API URLs to use your Render backend URL
-2. Deploy using Vercel's GitHub integration
+1. Update the API URL in `frontend/.env.production` with your Render backend URL
+2. Push your code to GitHub
+3. Go to [vercel.com](https://vercel.com) and create a new project
+4. Connect your GitHub repository
+5. Configure the project:
+   - **Project Name**: campus-cab-pool-frontend
+   - **Framework Preset**: Vite
+   - **Root Directory**: frontend
+   - **Build Command**: `npm run build`
+   - **Output Directory**: dist
+6. Add Environment Variables:
+   ```
+   VITE_API_BASE_URL=https://your-render-app-name.onrender.com
+   ```
+7. Deploy the project
 
 ## 🏁 Getting Started Locally
 

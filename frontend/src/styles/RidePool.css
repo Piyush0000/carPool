@@ -1,463 +1,464 @@
-:root {
-  /* Vibrant Light Theme Colors */
-  --ridepool-primary: #FF6B6B; /* Coral Red */
-  --ridepool-primary-dark: #FF5252; /* Darker Coral */
-  --ridepool-secondary: #4ECDC4; /* Turquoise */
-  --ridepool-accent: #FFD166; /* Yellow */
-  --ridepool-warning: #FF9F1C; /* Orange */
-  --ridepool-error: #EF476F; /* Pink */
-  --ridepool-success: #06D6A0; /* Mint Green */
-  --ridepool-info: #118AB2; /* Blue */
-  --ridepool-purple: #9B5DE5; /* Purple */
-  
-  /* Light Background Colors */
-  --ridepool-light-bg: #FFFFFF; /* Pure White */
-  --ridepool-light-bg-2: #F8F9FA; /* Light Gray */
-  --ridepool-light-bg-3: #E9ECEF; /* Lighter Gray */
-  
-  /* Text Colors */
-  --ridepool-text-dark: #212529; /* Dark Gray */
-  --ridepool-text-medium: #495057; /* Medium Gray */
-  --ridepool-text-light: #6C757D; /* Light Gray */
-  --ridepool-text-lighter: #ADB5BD; /* Lighter Gray */
-  
-  /* Border Colors */
-  --ridepool-border: #DEE2E6; /* Light Border */
-  --ridepool-border-dark: #CED4DA; /* Darker Border */
-  
-  /* Gradient Colors */
-  --ridepool-gradient-1: linear-gradient(135deg, var(--ridepool-primary), var(--ridepool-secondary));
-  --ridepool-gradient-2: linear-gradient(135deg, var(--ridepool-accent), var(--ridepool-purple));
-  --ridepool-gradient-3: linear-gradient(135deg, var(--ridepool-info), var(--ridepool-primary));
-  --ridepool-gradient-4: linear-gradient(135deg, var(--ridepool-success), var(--ridepool-secondary));
-}
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-/* Global styles for Ride Pool light theme */
-body {
-  background: var(--ridepool-light-bg);
-  color: var(--ridepool-text-dark);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-  background-attachment: fixed;
-  position: relative;
-  overflow: hidden;
-}
+const RidePoolDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalGroups: 0
+  });
+  const [recentGroups, setRecentGroups] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-/* Enhanced animated background particles */
-.floating-orb {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--ridepool-primary) 0%, transparent 70%);
-  opacity: 0.3;
-  z-index: -1;
-  animation: float 25s infinite ease-in-out;
-  pointer-events: none;
-}
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-.floating-orb:nth-child(2n) {
-  background: radial-gradient(circle, var(--ridepool-secondary) 0%, transparent 70%);
-  animation-delay: 5s;
-}
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch user groups
+      const groupsResponse = await axios.get('/api/group/mygroups');
+      
+      // Mock stats data (in a real app, this would come from the backend)
+      setStats({
+        totalGroups: groupsResponse.data.data.length
+      });
+      
+      // Set recent groups
+      setRecentGroups(groupsResponse.data.data.slice(0, 3));
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-.floating-orb:nth-child(3n) {
-  background: radial-gradient(circle, var(--ridepool-accent) 0%, transparent 70%);
-  animation-delay: 10s;
-}
+  const handleCreateGroup = () => {
+    navigate('/find-pool');
+  };
 
-.floating-orb:nth-child(4n) {
-  background: radial-gradient(circle, var(--ridepool-purple) 0%, transparent 70%);
-  animation-delay: 2s;
-}
+  const handleJoinGroup = () => {
+    navigate('/find-pool');
+  };
 
-.floating-orb:nth-child(5n) {
-  background: radial-gradient(circle, var(--ridepool-info) 0%, transparent 70%);
-  animation-delay: 7s;
-}
+  // Component-specific styles
+  const styles = {
+    primary: '#FF6B6B',
+    secondary: '#4ECDC4',
+    accent: '#FFD166',
+    warning: '#FF9F1C',
+    success: '#06D6A0',
+    info: '#118AB2',
+    purple: '#9B5DE5',
+    textDark: '#212529',
+    textMedium: '#495057',
+    textLight: '#6C757D',
+    border: '#DEE2E6',
+    lightBg: '#FFFFFF',
+    lightBg2: '#F8F9FA',
+  };
 
-/* Enhanced Animations */
-@keyframes float {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-pulse w-16 h-16 rounded-full" style={{
+          background: `linear-gradient(135deg, ${styles.primary}, ${styles.secondary})`,
+          animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+        }}></div>
+      </div>
+    );
   }
-  25% {
-    transform: translate(20px, -30px) rotate(90deg);
-  }
-  50% {
-    transform: translate(40px, -20px) rotate(180deg);
-  }
-  75% {
-    transform: translate(20px, 10px) rotate(270deg);
-  }
-  100% {
-    transform: translate(0, 0) rotate(360deg);
-  }
-}
 
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
+  return (
+    <>
+      {/* Component-specific CSS */}
+      <style>{`
+        .ridepool-dashboard-card {
+          background: ${styles.lightBg};
+          border: 1px solid ${styles.border};
+          border-radius: 16px;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+          transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .ridepool-dashboard-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -6px rgba(0, 0, 0, 0.2);
+          border-color: ${styles.primary};
+        }
+        
+        .ridepool-dashboard-btn {
+          position: relative;
+          overflow: hidden;
+          border-radius: 12px;
+          font-weight: 600;
+          transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          border: none;
+          cursor: pointer;
+          padding: 12px 24px;
+          font-size: 1rem;
+          text-decoration: none;
+        }
+        
+        .ridepool-dashboard-btn-primary {
+          background: linear-gradient(135deg, ${styles.primary}, ${styles.secondary});
+          color: white;
+          box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .ridepool-dashboard-btn-primary:hover {
+          box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+          transform: translateY(-3px);
+        }
+        
+        .ridepool-dashboard-btn-secondary {
+          background: linear-gradient(135deg, ${styles.accent}, ${styles.purple});
+          color: white;
+          box-shadow: 0 4px 15px rgba(255, 209, 102, 0.4);
+        }
+        
+        .ridepool-dashboard-btn-secondary:hover {
+          box-shadow: 0 6px 20px rgba(255, 209, 102, 0.6);
+          transform: translateY(-3px);
+        }
+        
+        .ridepool-dashboard-btn-tertiary {
+          background: linear-gradient(135deg, ${styles.info}, ${styles.primary});
+          color: white;
+          box-shadow: 0 4px 15px rgba(17, 138, 178, 0.4);
+        }
+        
+        .ridepool-dashboard-btn-tertiary:hover {
+          box-shadow: 0 6px 20px rgba(17, 138, 178, 0.6);
+          transform: translateY(-3px);
+        }
+        
+        .ridepool-dashboard-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        
+        .ridepool-dashboard-badge-primary {
+          background: linear-gradient(135deg, ${styles.primary}, ${styles.secondary});
+          color: white;
+          box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+        }
+        
+        .ridepool-dashboard-badge-success {
+          background: linear-gradient(135deg, ${styles.success}, ${styles.secondary});
+          color: white;
+          box-shadow: 0 2px 4px rgba(6, 214, 160, 0.3);
+        }
+        
+        .ridepool-dashboard-badge-warning {
+          background: linear-gradient(135deg, ${styles.warning}, ${styles.accent});
+          color: white;
+          box-shadow: 0 2px 4px rgba(255, 159, 28, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+          .ridepool-dashboard-card {
+            border-radius: 12px;
+          }
+          
+          .ridepool-dashboard-btn {
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+          }
+        }
+      `}</style>
 
-@keyframes morph {
-  0% { 
-    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; 
-    transform: rotate(0deg);
-  }
-  25% { 
-    border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; 
-    transform: rotate(90deg);
-  }
-  50% { 
-    border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; 
-    transform: rotate(180deg);
-  }
-  75% { 
-    border-radius: 60% 40% 40% 60% / 60% 60% 40% 40%; 
-    transform: rotate(270deg);
-  }
-  100% { 
-    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; 
-    transform: rotate(360deg);
-  }
-}
+      <div className="min-h-screen bg-white py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="mb-12">
+            <h1 className="text-4xl font-bold" style={{ color: styles.textDark }}>
+              Welcome to Ride Pool
+            </h1>
+            <p className="mt-4 text-xl" style={{ color: styles.textMedium }}>
+              Save money, reduce emissions, and connect with fellow students
+            </p>
+          </div>
 
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 mb-12">
+            <div className="ridepool-dashboard-card p-8">
+              <div className="flex items-center">
+                <div className="p-4 rounded-lg" style={{ background: `rgba(255, 107, 107, 0.2)` }}>
+                  <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.primary }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="ml-6">
+                  <h3 className="text-lg font-medium" style={{ color: styles.textLight }}>
+                    Total Groups
+                  </h3>
+                  <p className="text-3xl font-bold mt-1" style={{ color: styles.textDark }}>
+                    {stats.totalGroups}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
+          {/* Environmental Impact Message */}
+          <div className="ridepool-dashboard-card mb-12 p-8">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <div className="p-4 rounded-lg" style={{ background: `rgba(6, 214, 160, 0.2)` }}>
+                  <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.success }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-6">
+                <h3 className="text-2xl font-bold" style={{ color: styles.textDark }}>
+                  Share Rides, Save the Environment
+                </h3>
+                <p className="mt-4 text-lg leading-relaxed" style={{ color: styles.textMedium }}>
+                  Every cab share makes a difference. By choosing to ride together, you're reducing carbon emissions, 
+                  decreasing traffic congestion, and helping create a cleaner, greener campus for everyone.
+                </p>
+                <div className="mt-6 p-6 rounded-xl" style={{ background: styles.lightBg2 }}>
+                  <p className="text-lg" style={{ color: styles.success }}>
+                    <span className="font-bold">Did you know?</span> A single shared cab can reduce CO2 emissions by up to 75% 
+                    compared to individual rides. Keep sharing to make an even bigger impact!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-12">
+              {/* Quick Actions */}
+              <div className="ridepool-dashboard-card p-8">
+                <h2 className="text-2xl font-bold mb-10" style={{ color: styles.textDark }}>
+                  Quick Actions
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <button 
+                    onClick={handleCreateGroup}
+                    className="ridepool-dashboard-btn ridepool-dashboard-btn-primary py-8 px-6 rounded-2xl flex flex-col items-center justify-center hover:scale-105 transition-transform"
+                  >
+                    <svg className="h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span className="text-xl font-medium">Create Group</span>
+                    <span className="text-base opacity-90 mt-3">Start a new ride pool</span>
+                  </button>
+                  
+                  <button 
+                    onClick={handleJoinGroup}
+                    className="ridepool-dashboard-btn ridepool-dashboard-btn-secondary py-8 px-6 rounded-2xl flex flex-col items-center justify-center hover:scale-105 transition-transform"
+                  >
+                    <svg className="h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    <span className="text-xl font-medium">Join Group</span>
+                    <span className="text-base opacity-90 mt-3">Find existing pools</span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => navigate('/groups')}
+                    className="ridepool-dashboard-btn ridepool-dashboard-btn-tertiary py-8 px-6 rounded-2xl flex flex-col items-center justify-center hover:scale-105 transition-transform"
+                  >
+                    <svg className="h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span className="text-xl font-medium">All Groups</span>
+                    <span className="text-base opacity-90 mt-3">Browse all groups</span>
+                  </button>
+                </div>
+              </div>
 
+              {/* Recent Activity */}
+              <div className="ridepool-dashboard-card p-8">
+                <div className="flex items-center justify-between mb-10">
+                  <h2 className="text-2xl font-bold" style={{ color: styles.textDark }}>
+                    Recent Groups
+                  </h2>
+                  <button 
+                    onClick={() => navigate('/my-groups')}
+                    className="text-lg font-medium transition-colors hover:opacity-80"
+                    style={{ color: styles.primary }}
+                  >
+                    View All
+                  </button>
+                </div>
+                
+                {recentGroups.length > 0 ? (
+                  <div className="space-y-6">
+                    {recentGroups.map((group) => (
+                      <div 
+                        key={group._id} 
+                        className="flex items-center p-6 rounded-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                        style={{ 
+                          background: styles.lightBg2,
+                          border: `1px solid ${styles.border}`
+                        }}
+                        onClick={() => navigate(`/group/${group._id}`)}
+                      >
+                        <div 
+                          className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center"
+                          style={{
+                            background: `linear-gradient(135deg, ${styles.primary}, ${styles.secondary})`
+                          }}
+                        >
+                          <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                        </div>
+                        <div className="ml-6 flex-1">
+                          <h3 className="text-xl font-medium" style={{ color: styles.textDark }}>
+                            {group.groupName}
+                          </h3>
+                          <p className="text-base mt-1" style={{ color: styles.textLight }}>
+                            {group.route?.pickup?.address?.split(',')[0]} → {group.route?.drop?.address?.split(',')[0]}
+                          </p>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="ridepool-dashboard-badge ridepool-dashboard-badge-primary text-lg px-4 py-2">
+                            {group.members?.length || 0}/{group.seatCount || 0}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16">
+                    <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.textLight }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <h3 className="mt-6 text-xl font-medium" style={{ color: styles.textDark }}>
+                      No groups yet
+                    </h3>
+                    <p className="mt-3 text-lg" style={{ color: styles.textLight }}>
+                      Get started by creating your first group.
+                    </p>
+                    <div className="mt-10">
+                      <button
+                        onClick={handleCreateGroup}
+                        className="ridepool-dashboard-btn ridepool-dashboard-btn-primary px-8 py-4 rounded-xl text-lg font-semibold hover:scale-105 transition-transform"
+                      >
+                        Create Group
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
+            {/* Right Column */}
+            <div className="space-y-12">
+              {/* Upcoming Rides */}
+              <div className="ridepool-dashboard-card p-8">
+                <h2 className="text-2xl font-bold mb-10" style={{ color: styles.textDark }}>
+                  Upcoming Rides
+                </h2>
+                <div className="space-y-6">
+                  <div className="p-6 rounded-xl" style={{ 
+                    background: styles.lightBg2,
+                    border: `1px solid ${styles.border}`
+                  }}>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl font-medium" style={{ color: styles.textDark }}>
+                        Morning Ride
+                      </h3>
+                      <span className="ridepool-dashboard-badge ridepool-dashboard-badge-success text-lg px-4 py-2">
+                        Tomorrow
+                      </span>
+                    </div>
+                    <p className="text-base mt-3" style={{ color: styles.textLight }}>
+                      8:00 AM • Main Gate → Academic Block
+                    </p>
+                    <div className="flex items-center mt-5">
+                      <div className="flex -space-x-3">
+                        <div 
+                          className="w-8 h-8 rounded-full"
+                          style={{
+                            background: `linear-gradient(135deg, ${styles.primary}, ${styles.secondary})`
+                          }}
+                        ></div>
+                        <div 
+                          className="w-8 h-8 rounded-full"
+                          style={{
+                            background: `linear-gradient(135deg, ${styles.secondary}, ${styles.success})`
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-base ml-4" style={{ color: styles.textLight }}>
+                        2 members
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 rounded-xl" style={{ 
+                    background: styles.lightBg2,
+                    border: `1px solid ${styles.border}`
+                  }}>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl font-medium" style={{ color: styles.textDark }}>
+                        Evening Ride
+                      </h3>
+                      <span className="ridepool-dashboard-badge ridepool-dashboard-badge-warning text-lg px-4 py-2">
+                        Fri, 5:30 PM
+                      </span>
+                    </div>
+                    <p className="text-base mt-3" style={{ color: styles.textLight }}>
+                      5:30 PM • Academic Block → Main Gate
+                    </p>
+                    <div className="flex items-center mt-5">
+                      <div className="flex -space-x-3">
+                        <div 
+                          className="w-8 h-8 rounded-full"
+                          style={{
+                            background: `linear-gradient(135deg, ${styles.primary}, ${styles.secondary})`
+                          }}
+                        ></div>
+                        <div 
+                          className="w-8 h-8 rounded-full"
+                          style={{
+                            background: `linear-gradient(135deg, ${styles.secondary}, ${styles.success})`
+                          }}
+                        ></div>
+                        <div 
+                          className="w-8 h-8 rounded-full"
+                          style={{
+                            background: `linear-gradient(135deg, ${styles.warning}, ${styles.accent})`
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-base ml-4" style={{ color: styles.textLight }}>
+                        3 members
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
-
-
-
-/* Ride Pool Components with Light Theme */
-.ridepool-card {
-  background: var(--ridepool-light-bg);
-  border: 1px solid var(--ridepool-border);
-  border-radius: 16px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
-  overflow: hidden;
-
-}
-
-.ridepool-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  transition: 0.5s;
-}
-
-.ridepool-card:hover::before {
-  left: 100%;
-}
-
-.ridepool-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -6px rgba(0, 0, 0, 0.2);
-  border-color: var(--ridepool-primary);
-}
-
-.rainbow-border {
-  position: relative;
-  border-radius: 16px;
-  background: var(--ridepool-gradient-1);
-  background-size: 300% 300%;
-  animation: gradientShift 4s ease infinite;
-  padding: 3px;
-  box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
-}
-
-.rainbow-border .inner {
-  background: var(--ridepool-light-bg);
-  border-radius: 14px;
-  height: 100%;
-}
-
-.ridepool-btn {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transform: perspective(1px) translateZ(0);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: none;
-  cursor: pointer;
-  padding: 12px 24px;
-  font-size: 1rem;
-  text-decoration: none;
-}
-
-.ridepool-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transition: 0.5s;
-}
-
-.ridepool-btn:hover::before {
-  left: 100%;
-}
-
-.ridepool-btn-primary {
-  background: var(--ridepool-gradient-1);
-  color: white;
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-  transition: all 0.3s ease;
-}
-
-.ridepool-btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
-  transform: translateY(-3px) scale(1.05);
-
-}
-
-.ridepool-btn-secondary {
-  background: var(--ridepool-gradient-2);
-  color: white;
-  box-shadow: 0 4px 15px rgba(155, 93, 229, 0.4);
-  transition: all 0.3s ease;
-}
-
-.ridepool-btn-secondary:hover {
-  box-shadow: 0 6px 20px rgba(155, 93, 229, 0.6);
-  transform: translateY(-3px) scale(1.05);
-
-}
-
-.ridepool-btn-accent {
-  background: var(--ridepool-gradient-4);
-  color: white;
-  box-shadow: 0 4px 15px rgba(6, 214, 160, 0.4);
-  transition: all 0.3s ease;
-}
-
-.ridepool-btn-accent:hover {
-  box-shadow: 0 6px 20px rgba(6, 214, 160, 0.6);
-  transform: translateY(-3px) scale(1.05);
-
-}
-
-.ridepool-btn-tertiary {
-  background: var(--ridepool-gradient-3);
-  color: white;
-  box-shadow: 0 4px 15px rgba(17, 138, 178, 0.4);
-  transition: all 0.3s ease;
-}
-
-.ridepool-btn-tertiary:hover {
-  box-shadow: 0 6px 20px rgba(17, 138, 178, 0.6);
-  transform: translateY(-3px) scale(1.05);
-
-}
-
-.ridepool-input {
-  background: var(--ridepool-light-bg);
-  border: 2px solid var(--ridepool-border);
-  border-radius: 12px;
-  color: var(--ridepool-text-dark);
-  transition: all 0.3s ease;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  width: 100%;
-}
-
-.ridepool-input:focus {
-  outline: none;
-  border-color: var(--ridepool-primary);
-  box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.2);
-  background: var(--ridepool-light-bg);
-}
-
-.ridepool-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.ridepool-badge-primary {
-  background: var(--ridepool-gradient-1);
-  color: white;
-  box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
-}
-
-.ridepool-badge-secondary {
-  background: var(--ridepool-gradient-2);
-  color: white;
-  box-shadow: 0 2px 4px rgba(155, 93, 229, 0.3);
-}
-
-.ridepool-badge-accent {
-  background: var(--ridepool-gradient-4);
-  color: white;
-  box-shadow: 0 2px 4px rgba(6, 214, 160, 0.3);
-}
-
-.ridepool-badge-warning {
-  background: var(--ridepool-gradient-3);
-  color: white;
-  box-shadow: 0 2px 4px rgba(255, 159, 28, 0.3);
-}
-
-.ridepool-badge-error {
-  background: linear-gradient(135deg, var(--ridepool-error) 0%, #d32f2f 100%);
-  color: white;
-  box-shadow: 0 2px 4px rgba(239, 71, 111, 0.3);
-}
-
-.ridepool-badge-success {
-  background: linear-gradient(135deg, var(--ridepool-success) 0%, #05a081 100%);
-  color: white;
-  box-shadow: 0 2px 4px rgba(6, 214, 160, 0.3);
-}
-
-/* Gradient shift animation */
-.animate-gradient-shift {
-  background: var(--ridepool-gradient-1);
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
-}
-
-/* Custom scrollbar for light theme */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--ridepool-light-bg-2);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--ridepool-gradient-1);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--ridepool-gradient-2);
-}
-
-/* Background elements for light theme */
-.background-blob {
-  position: fixed;
-  width: 400px;
-  height: 400px;
-  background: var(--ridepool-gradient-1);
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.3;
-  z-index: -1;
-  animation: float 15s infinite ease-in-out, morph 20s infinite alternate;
-}
-
-.background-blob-1 {
-  top: 5%;
-  left: 5%;
-  animation: float 8s ease-in-out infinite, morph 15s infinite alternate;
-}
-
-.background-blob-2 {
-  bottom: 5%;
-  right: 5%;
-  background: var(--ridepool-gradient-2);
-  width: 300px;
-  height: 300px;
-  animation: float 10s ease-in-out infinite reverse, morph 12s infinite alternate-reverse;
-}
-
-
-
-/* Additional animated background elements */
-.animated-grid {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(255, 107, 107, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(78, 205, 196, 0.1) 1px, transparent 1px);
-  background-size: 40px 40px;
-  z-index: -2;
-  animation: gridMove 20s linear infinite;
-}
-
-@keyframes gridMove {
-  0% { background-position: 0 0; }
-  100% { background-position: 40px 40px; }
-}
-
-.floating-orb {
-  position: fixed;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--ridepool-primary) 0%, transparent 70%);
-  opacity: 0.4;
-  z-index: -1;
-  animation: float 15s infinite ease-in-out;
-}
-
-.floating-orb:nth-child(2n) {
-  background: radial-gradient(circle, var(--ridepool-secondary) 0%, transparent 70%);
-  animation-delay: 5s;
-}
-
-.floating-orb:nth-child(3n) {
-  background: radial-gradient(circle, var(--ridepool-accent) 0%, transparent 70%);
-  animation-delay: 10s;
-}
-
-.floating-orb:nth-child(4n) {
-  background: radial-gradient(circle, var(--ridepool-purple) 0%, transparent 70%);
-  animation-delay: 2s;
-}
-
-.floating-orb:nth-child(5n) {
-  background: radial-gradient(circle, var(--ridepool-info) 0%, transparent 70%);
-  animation-delay: 7s;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .ridepool-card {
-    border-radius: 12px;
-  }
-  
-  .ridepool-btn {
-    border-radius: 10px;
-  }
-  
-  .background-blob {
-    width: 250px;
-    height: 250px;
-  }
-  
-  .background-blob-2 {
-    width: 150px;
-    height: 150px;
-  }
-}
+export default RidePoolDashboard;

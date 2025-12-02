@@ -42,6 +42,7 @@ interface GroupData {
   status: string;
   seatCount: number;
   chatRoomId: string;
+  dateTime: string;
 }
 
 const GroupDetail: React.FC = () => {
@@ -134,7 +135,8 @@ const GroupDetail: React.FC = () => {
           },
           status: groupResponse.data.data.status,
           seatCount: groupResponse.data.data.seatCount,
-          chatRoomId: groupResponse.data.data.chatRoomId
+          chatRoomId: groupResponse.data.data.chatRoomId,
+          dateTime: groupResponse.data.data.dateTime
         };
         
         setGroup(transformedGroup);
@@ -296,6 +298,12 @@ const GroupDetail: React.FC = () => {
               </div>
               <div className="border-t border-gray-200">
                 <dl>
+                  <div className="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-700">Date & Time</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {group?.dateTime ? new Date(group.dateTime).toLocaleString() : 'Not specified'}
+                    </dd>
+                  </div>
                   <div className="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-700">Route</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">

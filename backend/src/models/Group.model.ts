@@ -55,8 +55,7 @@ const GroupSchema: Schema = new Schema({
         required: true
       },
       coordinates: {
-        type: [Number],
-        index: '2dsphere'
+        type: [Number]
       }
     },
     drop: {
@@ -65,8 +64,7 @@ const GroupSchema: Schema = new Schema({
         required: true
       },
       coordinates: {
-        type: [Number],
-        index: '2dsphere'
+        type: [Number]
       }
     }
   },

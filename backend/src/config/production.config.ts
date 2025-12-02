@@ -2,7 +2,7 @@
 export const productionConfig = {
   // MongoDB configuration
   mongodb: {
-    uri: process.env.MONGODB_URI_PROD || process.env.MONGODB_URI || 'mongodb://localhost:27017/campus_cab_pool',
+    uri: process.env.MONGODB_URI_PROD || process.env.MONGODB_URI || 'mongodb+srv://piyushrathore:piyushcodes@cluster0.wiqfcjk.mongodb.net/carpoolgrp?retryWrites=true&w=majority&appName=Cluster0',
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,

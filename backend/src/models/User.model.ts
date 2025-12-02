@@ -52,11 +52,13 @@ const UserSchema: Schema = new Schema({
   phone: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    default: 'N/A'
   },
   gender: {
     type: String,
-    enum: ['Male', 'Female', 'Other']
+    enum: ['Male', 'Female', 'Other'],
+    default: 'Other'
   },
   year: {
     type: String,
@@ -70,15 +72,13 @@ const UserSchema: Schema = new Schema({
     home: {
       address: String,
       coordinates: {
-        type: [Number],
-        index: '2dsphere'
+        type: [Number]
       }
     },
     college: {
       address: String,
       coordinates: {
-        type: [Number],
-        index: '2dsphere'
+        type: [Number]
       }
     }
   },
@@ -88,8 +88,7 @@ const UserSchema: Schema = new Schema({
   },
   liveLocation: {
     coordinates: {
-      type: [Number],
-      index: '2dsphere'
+      type: [Number]
     }
   },
   studentIdUrl: {

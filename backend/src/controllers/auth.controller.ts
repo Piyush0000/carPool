@@ -255,10 +255,10 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
         name,
         email,
         password: await hashPassword(crypto.randomBytes(20).toString('hex')), // Generate a random password
-        phone: '',
-        gender: '',
-        year: '',
-        branch: '',
+        phone: 'N/A',
+        gender: 'Other',
+        year: 'N/A',
+        branch: 'N/A',
         isEmailVerified: true, // Firebase users are already verified
         emailVerificationToken: undefined,
         emailVerificationExpires: undefined

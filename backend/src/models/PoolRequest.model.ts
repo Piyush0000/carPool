@@ -34,7 +34,6 @@ const PoolRequestSchema: Schema = new Schema({
     },
     coordinates: {
       type: [Number],
-      index: '2dsphere',
       required: true
     }
   },
@@ -45,7 +44,6 @@ const PoolRequestSchema: Schema = new Schema({
     },
     coordinates: {
       type: [Number],
-      index: '2dsphere',
       required: true
     }
   },

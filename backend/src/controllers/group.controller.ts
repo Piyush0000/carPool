@@ -337,22 +337,34 @@ export const getGroup = async (req: any, res: Response): Promise<void> => {
 // @access  Private
 export const matchGroups = async (req: any, res: Response): Promise<void> => {
   try {
-    const { pickupLocation, dropLocation, preferredGender } = req.body;
+    const { pickupLocation, dropLocation, dateTime, preferredGender } = req.body;
     
     // Validate required fields
-    if (!pickupLocation || !dropLocation) {
+    if (!pickupLocation || !dropLocation || !dateTime) {
       res.status(400).json({
         success: false,
-        message: 'Pickup location and drop location are required'
+        message: 'Pickup location, drop location, and date time are required'
       });
       return;
     }
+    
+    // Convert dateTime to Date object if it's a string
+    const requestDateTime = new Date(dateTime);
+    
+    // Calculate time range (25 minutes)
+    const timeRange = 25 * 60 * 1000; // 25 minutes in milliseconds
+    const startTime = new Date(requestDateTime.getTime() - timeRange);
+    const endTime = new Date(requestDateTime.getTime() + timeRange);
     
     // Find matching groups with geospatial queries
     const matchingGroups = await Group.find({
       status: 'Open',
       'members.0': { $exists: true }, // Has at least one member
-      $expr: { $lt: [{ $size: '$members' }, '$seatCount'] } // Not full
+      $expr: { $lt: [{ $size: '$members' }, '$seatCount'] }, // Not full
+      dateTime: {
+        $gte: startTime,
+        $lte: endTime
+      }
     }).populate({
       path: 'members.user',
       select: 'name email gender year branch phone',
@@ -389,11 +401,17 @@ export const matchGroups = async (req: any, res: Response): Promise<void> => {
         group.route.drop.coordinates[0] // lon2
       );
       
-      // Calculate match score (0-100)
-      // Distance factor (60% weight): closer locations get higher scores
-      const distanceScore = Math.max(0, 60 - (pickupDistance + dropDistance) / 1000);
+      // Time difference in minutes
+      const timeDiff = Math.abs(group.dateTime.getTime() - requestDateTime.getTime()) / (1000 * 60);
       
-      // Gender preference factor (40% weight)
+      // Calculate match score (0-100)
+      // Distance factor (40% weight): closer locations get higher scores
+      const distanceScore = Math.max(0, 40 - (pickupDistance + dropDistance) / 1000);
+      
+      // Time factor (40% weight): closer times get higher scores
+      const timeScore = Math.max(0, 40 - timeDiff / 2);
+      
+      // Gender preference factor (20% weight)
       let genderScore = 0;
       if (preferredGender && preferredGender !== 'Any') {
         // Filter members who have gender property and match the preferred gender
@@ -405,12 +423,12 @@ export const matchGroups = async (req: any, res: Response): Promise<void> => {
                  member.user.gender === preferredGender;
         });
         // Higher score if more members match the preferred gender
-        genderScore = group.members.length > 0 ? (membersWithGender.length / group.members.length) * 40 : 0;
+        genderScore = group.members.length > 0 ? (membersWithGender.length / group.members.length) * 20 : 0;
       } else {
-        genderScore = 40; // Full score if no gender preference
+        genderScore = 20; // Full score if no gender preference
       }
       
-      const matchScore = Math.min(100, distanceScore + genderScore);
+      const matchScore = Math.min(100, distanceScore + timeScore + genderScore);
       
       return {
         ...group.toObject(),
@@ -418,7 +436,8 @@ export const matchGroups = async (req: any, res: Response): Promise<void> => {
         distanceSimilarity: {
           pickup: pickupDistance,
           drop: dropDistance
-        }
+        },
+        timeDifference: timeDiff
       };
     });
     
@@ -426,7 +445,7 @@ export const matchGroups = async (req: any, res: Response): Promise<void> => {
     const filteredMatches = scoredMatches
       .filter(match => match.matchScore >= 30) // Only show matches with score >= 30
       .sort((a, b) => b.matchScore - a.matchScore);
-    
+          
     res.status(200).json({
       success: true,
       count: filteredMatches.length,
