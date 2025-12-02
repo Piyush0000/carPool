@@ -8,7 +8,7 @@ import Register from './pages/Register';
 import FindPool from './pages/FindPool';
 import GroupDetail from './pages/GroupDetail';
 import Profile from './pages/Profile';
-import Dashboard from './pages/Dashboard';
+import RidePoolDashboard from './components/RidePoolDashboard';
 import GroupsPage from './pages/GroupsPage';
 import GroupChatPage from './pages/GroupChatPage';
 import EmailVerification from './pages/EmailVerification';
@@ -123,7 +123,7 @@ function App() {
                   <div className="min-h-screen flex flex-col">
                     <Navbar />
                     <main className="flex-grow pt-16">
-                      <Dashboard />
+                      <RidePoolDashboard />
                     </main>
                   </div>
                 </ProtectedRoute>
