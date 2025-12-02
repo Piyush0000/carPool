@@ -1,32 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import io from 'socket.io-client';
-import api from '../services/api.service';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  initializeCometChat, 
+  loginToCometChat, 
+  getMessages, 
+  sendTextMessage,
+  attachMessageListener,
+  removeMessageListener
+} from '../services/cometchat.service';
+import { groupAPI } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 import LocationTracker from '../components/LocationTracker';
 import GroupMap from '../components/GroupMap';
 
-let socket: any;
+interface ChatMessage {
+  id: string;
+  user: string;
+  content: string;
+  time: string;
+}
+
+let isCometChatInitialized = false;
 
 const GroupDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated, token } = useAuth();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [group, setGroup] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [fareAmount, setFareAmount] = useState('');
   const [showFareCalculator, setShowFareCalculator] = useState(false);
   const [error, setError] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleJoinGroup = async () => {
     try {
-      await api.post(`/api/group/join/${id}`);
+      if (!id) {
+        alert('Invalid group ID.');
+        return;
+      }
+      
+      await groupAPI.join(id);
       // Refresh the page to load the group data
       window.location.reload();
     } catch (err: any) {
       console.error('Error joining group:', err);
-      alert('Failed to join group. Please try again.');
+      if (err.response?.status === 400) {
+        alert(`Error joining group: ${err.response.data.message || 'Group is full or you are already a member.'}`);
+      } else if (err.response?.status === 404) {
+        alert('Group not found.');
+      } else if (err.response?.status === 401) {
+        alert('You must be logged in to join a group.');
+      } else {
+        alert(`Failed to join group: ${err.message || 'Please try again.'}`);
+      }
     }
   };
 
@@ -37,14 +66,21 @@ const GroupDetail: React.FC = () => {
         setError('');
         
         // Check if user is authenticated
-        if (!isAuthenticated) {
+        if (!isAuthenticated || !user) {
           setError('You must be logged in to view group details.');
           setLoading(false);
           return;
         }
         
+        // Check if group ID is provided
+        if (!id) {
+          setError('Invalid group ID.');
+          setLoading(false);
+          return;
+        }
+        
         // Fetch group data
-        const groupResponse = await api.get(`/api/group/${id}`);
+        const groupResponse = await groupAPI.getById(id);
         
         // Transform group data to match UI structure
         const transformedGroup = {
@@ -64,23 +100,41 @@ const GroupDetail: React.FC = () => {
             drop: groupResponse.data.data.route.drop.address
           },
           status: groupResponse.data.data.status,
-          seatCount: groupResponse.data.data.seatCount
+          seatCount: groupResponse.data.data.seatCount,
+          chatRoomId: groupResponse.data.data.chatRoomId
         };
         
         setGroup(transformedGroup);
         
+        // Initialize and login to CometChat
+        if (user && !isCometChatInitialized) {
+          try {
+            await initializeCometChat();
+            await loginToCometChat(user.id, user.id);
+            isCometChatInitialized = true;
+          } catch (chatError) {
+            console.log('CometChat initialization/login error:', chatError);
+          }
+        }
+        
         // Fetch chat messages for this group
-        const messagesResponse = await api.get(`/api/chat/history/${id}`);
-        
-        // Transform messages to match UI structure
-        const transformedMessages = messagesResponse.data.data.map((message: any) => ({
-          id: message._id,
-          user: message.sender.name,
-          content: message.content,
-          time: new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }));
-        
-        setMessages(transformedMessages);
+        if (transformedGroup.chatRoomId) {
+          try {
+            const messagesData = await getMessages(transformedGroup.chatRoomId, 50, 'group');
+            
+            const transformedMessages = messagesData.map((message: any) => ({
+              id: message.getId().toString(),
+              user: message.getSender().getName() || message.getSender().getUid(),
+              content: message.getText(),
+              time: new Date(message.getSentAt() * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }));
+            
+            setMessages(transformedMessages);
+          } catch (msgError) {
+            console.error('Error fetching messages:', msgError);
+            // Don't show error to user, just log it
+          }
+        }
       } catch (err: any) {
         console.error('Error fetching group data:', err);
         // Check if it's a 403 error (not a member)
@@ -88,13 +142,14 @@ const GroupDetail: React.FC = () => {
           setError('You are not a member of this group. Please join the group first.');
         } else if (err.response?.status === 404) {
           setError('Group not found.');
-        } else if (err.response?.status === 401 || !isAuthenticated) {
-          setError('You must be logged in to view group details. Redirecting to login page...');
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 3000);
+        } else if (err.response?.status === 401) {
+          setError('You must be logged in to view group details.');
+        } else if (err.response?.status === 500) {
+          setError('Server error. Please try again later.');
+        } else if (!navigator.onLine) {
+          setError('No internet connection. Please check your connection and try again.');
         } else {
-          setError('Failed to load group data. Please try again later.');
+          setError(`Failed to load group data: ${err.message || 'Unknown error'}. Please try again later.`);
         }
       } finally {
         setLoading(false);
@@ -103,37 +158,60 @@ const GroupDetail: React.FC = () => {
     
     fetchData();
     
-    // Initialize socket connection
-    socket = io('http://localhost:5000');
-    socket.emit('join_room', `group_${id}`);
+    // Attach message listener for real-time updates
+    const onTextMessageReceived = (message: any) => {
+      // Check if message is for this group
+      if (message.getReceiverType() === 'group') {
+        const newMsg = {
+          id: message.getId().toString(),
+          user: message.getSender().getName() || message.getSender().getUid(),
+          content: message.getText(),
+          time: new Date(message.getSentAt() * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        setMessages(prev => [...prev, newMsg]);
+      }
+    };
     
-    socket.on('receive_message', (data: any) => {
-      setMessages(prev => [...prev, data]);
-    });
+    attachMessageListener(
+      'groupChatListener',
+      onTextMessageReceived
+    );
     
     return () => {
-      socket.disconnect();
+      removeMessageListener('groupChatListener');
     };
   }, [id, isAuthenticated]);
 
   const sendMessage = async () => {
-    if (newMessage.trim() === '') return;
+    if (newMessage.trim() === '' || !id) return;
     
     try {
-      // Send message to backend
-      await api.post('/api/chat/send', {
-        groupId: id,
-        content: newMessage,
-        messageType: 'text'
-      });
-      
-      // Clear input
-      setNewMessage('');
+      // Send message through CometChat
+      if (group && group.chatRoomId) {
+        await sendTextMessage(group.chatRoomId, newMessage, 'group');
+        
+        // Add message to local state
+        const newMsg = {
+          id: Date.now().toString(),
+          user: 'You',
+          content: newMessage,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        
+        setMessages(prev => [...prev, newMsg]);
+        setNewMessage('');
+      }
     } catch (err: any) {
       console.error('Error sending message:', err);
       alert('Failed to send message. Please try again.');
     }
   };
+
+  // Scroll to bottom of messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -144,23 +222,13 @@ const GroupDetail: React.FC = () => {
 
   const calculateFare = () => {
     if (!fareAmount || isNaN(Number(fareAmount))) return;
-    
+      
     const amount = parseFloat(fareAmount);
     const memberCount = group?.members.length || 1;
     const share = (amount / memberCount).toFixed(2);
-    
+      
     alert(`Total fare: ₹${amount}\nEach person owes: ₹${share}`);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
-        <div className="flex justify-center">
-          <div className="animate-pulse-glow w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></div>
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -405,6 +473,7 @@ const GroupDetail: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
               

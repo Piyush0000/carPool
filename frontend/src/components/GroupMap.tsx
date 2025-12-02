@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { groupAPI } from '../services/api.service';
 
 interface GroupMapProps {
   groupId: string;
@@ -30,18 +31,14 @@ const GroupMap: React.FC<GroupMapProps> = ({ groupId }) => {
       setLoading(true);
       
       // Fetch real group members with their locations
-      const response = await fetch(`/api/group/${groupId}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      const groupData = result.data;
+      const response = await groupAPI.getById(groupId);
+      const groupData = response.data.data;
       
       // Extract members with their locations
       const membersWithLocations = groupData.members.map((member: any) => ({
-        _id: member._id,
-        name: member.name,
-        liveLocation: member.liveLocation
+        _id: member.user._id,
+        name: member.user.name,
+        liveLocation: member.user.liveLocation
       })).filter((member: GroupMember) => member.liveLocation);
       
       setMembers(membersWithLocations);

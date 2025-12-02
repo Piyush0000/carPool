@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import type { ReactNode } from 'react';
+import { signInWithGoogle, signOutFirebase } from '../services/firebase.service';
+import { authAPI } from '../services/api.service';
 
 // Set base URL for API requests
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -17,8 +19,9 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
+  register: (userData: any) => Promise<any>;
   logout: () => void;
+  signInWithGoogle: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
 }
@@ -71,7 +74,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(token);
       setUser(user);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } catch (err) {
+    } catch (err: any) {
+      // Provide better error message for unverified emails
+      if (err.response?.data?.message?.includes('verify your email')) {
+        throw new Error('Please verify your email before logging in. Check your inbox for the verification link.');
+      }
       throw err;
     }
   };
@@ -80,12 +87,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: any) => {
     try {
       const res = await axios.post('/api/auth/register', userData);
-      const { token, user } = res.data;
-      
-      localStorage.setItem('token', token);
-      setToken(token);
-      setUser(user);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      // Don't automatically log in - user needs to verify email first
+      return res.data;
     } catch (err) {
       throw err;
     }
@@ -97,6 +100,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
     setUser(null);
     delete axios.defaults.headers.common['Authorization'];
+    signOutFirebase().catch(console.error);
+  };
+
+  // Google Sign-In function
+  const handleGoogleSignIn = async () => {
+    try {
+      const firebaseUser = await signInWithGoogle();
+      
+      // Get the ID token from Firebase Auth
+      const idToken = await firebaseUser.getIdToken();
+      
+      if (!idToken) {
+        throw new Error('Failed to get Firebase ID token');
+      }
+      
+      // Send the ID token to our backend for verification
+      const response = await authAPI.firebaseAuth(idToken);
+      
+      const { token, user } = response.data;
+      
+      localStorage.setItem('token', token);
+      setToken(token);
+      setUser(user);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      throw error;
+    }
   };
 
   // Auth status
@@ -110,6 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     register,
     logout,
+    signInWithGoogle: handleGoogleSignIn,
     isAuthenticated,
     isAdmin
   };

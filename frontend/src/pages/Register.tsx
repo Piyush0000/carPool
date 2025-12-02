@@ -16,7 +16,7 @@ const Register: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { register } = useAuth();
+  const { register, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -68,9 +68,26 @@ const Register: React.FC = () => {
       const { confirmPassword, ...registrationData } = formData;
       
       await register(registrationData);
-      navigate('/dashboard');
+      // Show success message and redirect to login
+      setError('Registration successful! Please check your email for verification link.');
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setError('');
+      setLoading(true);
+      await signInWithGoogle();
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in with Google');
     } finally {
       setLoading(false);
     }
@@ -261,7 +278,36 @@ const Register: React.FC = () => {
               )}
             </button>
           </div>
+          
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-600"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-800 text-gray-300">Or continue with</span>
+            </div>
+          </div>
+          
+          <div>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="ridepool-btn ridepool-btn-secondary group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            >
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"/>
+              </svg>
+              Sign up with Google
+            </button>
+          </div>
         </form>
+        
+        <div className="text-center text-sm text-gray-400 mt-4">
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-purple-400 hover:text-purple-300">
+            Sign in
+          </Link>
+        </div>
       </div>
     </div>
   );

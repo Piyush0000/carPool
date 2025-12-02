@@ -20,6 +20,7 @@ export interface IGroup extends Document {
   seatCount: number;
   status: 'Open' | 'Locked' | 'Completed';
   chatRoomId: string;
+  description?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,14 +49,20 @@ const GroupSchema: Schema = new Schema({
   }],
   route: {
     pickup: {
-      address: String,
+      address: {
+        type: String,
+        required: true
+      },
       coordinates: {
         type: [Number],
         index: '2dsphere'
       }
     },
     drop: {
-      address: String,
+      address: {
+        type: String,
+        required: true
+      },
       coordinates: {
         type: [Number],
         index: '2dsphere'
@@ -77,6 +84,10 @@ const GroupSchema: Schema = new Schema({
     type: String,
     required: true,
     unique: true
+  },
+  description: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true

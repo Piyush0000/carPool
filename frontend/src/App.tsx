@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import RidePoolDashboard from './pages/RidePoolDashboard';
 import GroupsPage from './pages/GroupsPage';
 import GroupChatPage from './pages/GroupChatPage';
+import EmailVerification from './pages/EmailVerification';
 import './App.css';
 
 // Background Animation Component
@@ -154,6 +155,7 @@ function App() {
                   <GroupChatPage />
                 </ProtectedRoute>
               } />
+              <Route path="/verify-email" element={<EmailVerification />} />
             </Routes>
           </div>
         </Router>

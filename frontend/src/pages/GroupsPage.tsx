@@ -1,20 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  initializeCometChat, 
-  loginToCometChat, 
-  createGroup as createCometChatGroup,
-  joinGroup as joinCometChatGroup,
-  getGroupsList
-} from '../services/cometchat.service';
+import { groupAPI } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Group {
-  guid: string;
-  name: string;
-  type: string;
-  memberCount: number;
+  _id: string;
+  groupName: string;
+  members: {
+    user: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+    role: string;
+  }[];
+  route: {
+    pickup: {
+      address: string;
+    };
+    drop: {
+      address: string;
+    };
+  };
+  seatCount: number;
+  status: string;
   description?: string;
+  createdAt: string;
 }
 
 const GroupsPage: React.FC = () => {
@@ -24,58 +35,31 @@ const GroupsPage: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [groupDescription, setGroupDescription] = useState('');
-  const [groupType, setGroupType] = useState<'public' | 'private' | 'password'>('public');
-  const [password, setPassword] = useState('');
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [dropAddress, setDropAddress] = useState('');
+  const [seatCount, setSeatCount] = useState(4);
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
   
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Initialize and load groups
+  // Load groups
   useEffect(() => {
-    const initAndLoadGroups = async () => {
-      try {
-        setLoading(true);
-        await initializeCometChat();
-        
-        // Login to CometChat if user exists
-        if (user) {
-          try {
-            await loginToCometChat(user.id, user.id);
-          } catch (loginError) {
-            console.log('User might already be logged in or login failed');
-          }
-        }
-        
-        await loadGroups();
-      } catch (err) {
-        console.error('Error initializing CometChat:', err);
-        setError('Failed to initialize chat service');
-      } finally {
-        setLoading(false);
-      }
-    };
+    loadGroups();
+  }, []);
 
-    initAndLoadGroups();
-  }, [user]);
-
-  // Load groups from CometChat
+  // Load groups from backend
   const loadGroups = async () => {
     try {
-      const groupsList = await getGroupsList(50);
-      const formattedGroups: Group[] = groupsList.map(group => ({
-        guid: group.getGuid(),
-        name: group.getName(),
-        type: group.getType(),
-        memberCount: group.getMembersCount(),
-        description: group.getDescription()
-      }));
-      
-      setGroups(formattedGroups);
+      setLoading(true);
+      const response = await groupAPI.getAll();
+      setGroups(response.data.data);
       setError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading groups:', err);
       setError('Failed to load groups');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,19 +72,30 @@ const GroupsPage: React.FC = () => {
       return;
     }
     
+    if (!pickupAddress.trim() || !dropAddress.trim()) {
+      setError('Both pickup and drop addresses are required');
+      return;
+    }
+    
     try {
       setLoading(true);
       
-      // Generate a unique GUID for the group
-      const guid = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Create group in CometChat
-      const newGroup = await createCometChatGroup(
-        guid,
+      // Create group in backend
+      const response = await groupAPI.create({
         groupName,
-        groupType,
-        groupType === 'password' ? password : undefined
-      );
+        description: groupDescription,
+        route: {
+          pickup: {
+            address: pickupAddress,
+            coordinates: [0, 0] // Placeholder coordinates
+          },
+          drop: {
+            address: dropAddress,
+            coordinates: [0, 0] // Placeholder coordinates
+          }
+        },
+        seatCount
+      });
       
       // Refresh groups list
       await loadGroups();
@@ -108,8 +103,9 @@ const GroupsPage: React.FC = () => {
       // Reset form
       setGroupName('');
       setGroupDescription('');
-      setGroupType('public');
-      setPassword('');
+      setPickupAddress('');
+      setDropAddress('');
+      setSeatCount(4);
       setShowCreateForm(false);
       
       // Show success message
@@ -117,7 +113,7 @@ const GroupsPage: React.FC = () => {
       
       // Clear success message after 3 seconds
       setTimeout(() => setError(null), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating group:', err);
       setError('Failed to create group. Please try again.');
     } finally {
@@ -126,20 +122,16 @@ const GroupsPage: React.FC = () => {
   };
 
   // Join a group
-  const handleJoinGroup = async (group: Group) => {
+  const handleJoinGroup = async (groupId: string) => {
     try {
-      setJoiningGroupId(group.guid);
+      setJoiningGroupId(groupId);
       
-      // Join group in CometChat
-      await joinCometChatGroup(
-        group.guid,
-        group.type as any,
-        group.type === 'password' ? password : undefined
-      );
+      // Join group in backend
+      await groupAPI.join(groupId);
       
-      // Navigate to group chat
-      navigate(`/group-chat/${group.guid}`);
-    } catch (err) {
+      // Navigate to group detail
+      navigate(`/group/${groupId}`);
+    } catch (err: any) {
       console.error('Error joining group:', err);
       setError('Failed to join group. Please try again.');
     } finally {
@@ -147,9 +139,9 @@ const GroupsPage: React.FC = () => {
     }
   };
 
-  // Navigate to group chat
-  const goToGroupChat = (groupId: string) => {
-    navigate(`/group-chat/${groupId}`);
+  // Navigate to group detail
+  const goToGroupDetail = (groupId: string) => {
+    navigate(`/group/${groupId}`);
   };
 
   return (
@@ -214,36 +206,50 @@ const GroupsPage: React.FC = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="groupType" className="block text-sm font-medium text-gray-300 mb-1">
-                    Group Type
+                  <label htmlFor="pickupAddress" className="block text-sm font-medium text-gray-300 mb-1">
+                    Pickup Location *
                   </label>
-                  <select
-                    id="groupType"
-                    value={groupType}
-                    onChange={(e) => setGroupType(e.target.value as any)}
+                  <input
+                    type="text"
+                    id="pickupAddress"
+                    value={pickupAddress}
+                    onChange={(e) => setPickupAddress(e.target.value)}
                     className="ridepool-input w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
-                  >
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                    <option value="password">Password Protected</option>
-                  </select>
+                    placeholder="Enter pickup location"
+                    required
+                  />
                 </div>
                 
-                {groupType === 'password' && (
-                  <div>
-                    <label htmlFor="groupPassword" className="block text-sm font-medium text-gray-300 mb-1">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      id="groupPassword"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="ridepool-input w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
-                      placeholder="Enter group password"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label htmlFor="dropAddress" className="block text-sm font-medium text-gray-300 mb-1">
+                    Drop Location *
+                  </label>
+                  <input
+                    type="text"
+                    id="dropAddress"
+                    value={dropAddress}
+                    onChange={(e) => setDropAddress(e.target.value)}
+                    className="ridepool-input w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
+                    placeholder="Enter drop location"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label htmlFor="seatCount" className="block text-sm font-medium text-gray-300 mb-1">
+                  Number of Seats
+                </label>
+                <select
+                  id="seatCount"
+                  value={seatCount}
+                  onChange={(e) => setSeatCount(parseInt(e.target.value))}
+                  className="ridepool-input w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
+                >
+                  <option value={2}>2 seats</option>
+                  <option value={3}>3 seats</option>
+                  <option value={4}>4 seats</option>
+                </select>
               </div>
               
               <div className="flex justify-end space-x-3">
@@ -297,26 +303,33 @@ const GroupsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {groups.map((group) => (
                 <div 
-                  key={group.guid} 
+                  key={group._id} 
                   className="ridepool-card p-5 hover:bg-gray-700 hover:bg-opacity-30 transition-all duration-200 cursor-pointer"
-                  onClick={() => goToGroupChat(group.guid)}
+                  onClick={() => goToGroupDetail(group._id)}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-medium text-white">{group.name}</h3>
+                      <h3 className="text-lg font-medium text-white">{group.groupName}</h3>
                       <p className="mt-1 text-sm text-gray-300 line-clamp-2">
                         {group.description || 'No description provided'}
                       </p>
                     </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      group.type === 'public' 
-                        ? 'bg-green-100 text-green-800' 
-                        : group.type === 'private' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-red-100 text-red-800'
-                    }`}>
-                      {group.type.charAt(0).toUpperCase() + group.type.slice(1)}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${{
+                      'Open': 'bg-green-100 text-green-800',
+                      'Locked': 'bg-yellow-100 text-yellow-800',
+                      'Completed': 'bg-gray-100 text-gray-800'
+                    }[group.status] || 'bg-gray-100 text-gray-800'}`}>
+                      {group.status}
                     </span>
+                  </div>
+                  
+                  <div className="mt-3 text-sm text-gray-400">
+                    <div className="flex items-center">
+                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      {group.route.pickup.address} → {group.route.drop.address}
+                    </div>
                   </div>
                   
                   <div className="mt-4 flex items-center justify-between">
@@ -324,18 +337,18 @@ const GroupsPage: React.FC = () => {
                       <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                       </svg>
-                      {group.memberCount} members
+                      {group.members.length}/{group.seatCount} seats
                     </div>
                     
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleJoinGroup(group);
+                        handleJoinGroup(group._id);
                       }}
-                      disabled={joiningGroupId === group.guid}
+                      disabled={joiningGroupId === group._id}
                       className="ridepool-btn ridepool-btn-primary px-3 py-1 rounded-md text-xs font-medium disabled:opacity-50"
                     >
-                      {joiningGroupId === group.guid ? 'Joining...' : 'Join Group'}
+                      {joiningGroupId === group._id ? 'Joining...' : 'Join Group'}
                     </button>
                   </div>
                 </div>

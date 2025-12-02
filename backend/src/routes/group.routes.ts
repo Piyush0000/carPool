@@ -5,7 +5,8 @@ import {
   leaveGroup,
   lockGroup,
   getUserGroups,
-  getGroup
+  getGroup,
+  getAllGroups
 } from '../controllers/group.controller';
 import { protect } from '../middleware/auth.middleware';
 
@@ -14,7 +15,8 @@ const router = express.Router();
 // All routes below are protected
 router.use(protect);
 
-router.route('/create')
+router.route('/')
+  .get(getAllGroups)
   .post(createGroup);
 
 router.route('/mygroups')

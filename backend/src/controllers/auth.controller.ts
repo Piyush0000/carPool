@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import User from '../models/User.model';
 import { hashPassword, comparePassword, sendTokenResponse } from '../utils/auth.utils';
+import { sendEmailVerification } from '../utils/email.utils';
+import crypto from 'crypto';
+import { verifyFirebaseIdToken } from '../services/firebase-admin.service';
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -40,6 +43,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
+    // Generate email verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     // Create user
     const user = await User.create({
       name,
@@ -48,10 +55,29 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       phone,
       gender,
       year,
-      branch
+      branch,
+      emailVerificationToken,
+      emailVerificationExpires,
+      isEmailVerified: false
     });
 
-    sendTokenResponse(user, 201, res);
+    // Send verification email
+    try {
+      await sendEmailVerification(user, emailVerificationToken);
+      
+      res.status(201).json({
+        success: true,
+        message: 'User registered successfully. Please check your email for verification link.'
+      });
+    } catch (emailError) {
+      // If email fails, delete the user and return error
+      await User.findByIdAndDelete(user._id);
+      
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send verification email. Please try again.'
+      });
+    }
   } catch (err: any) {
     res.status(500).json({
       success: false,
@@ -82,6 +108,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({
         success: false,
         message: 'Invalid credentials'
+      });
+      return;
+    }
+
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      res.status(401).json({
+        success: false,
+        message: 'Please verify your email before logging in'
       });
       return;
     }
@@ -137,4 +172,111 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     success: true,
     data: {}
   });
+};
+
+// @desc    Verify email
+// @route   GET /api/auth/verify-email
+// @access  Public
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, userId } = req.query;
+
+    // Validate token and userId
+    if (!token || !userId) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid verification link'
+      });
+      return;
+    }
+
+    // Find user with matching token and expiration
+    const user = await User.findOne({
+      _id: userId,
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+      return;
+    }
+
+    // Update user as verified
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully'
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Server Error'
+    });
+  }
+};
+
+// @desc    Firebase authentication
+// @route   POST /api/auth/firebase
+// @access  Public
+export const firebaseAuth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { idToken } = req.body;
+
+    // Verify Firebase ID token
+    const decodedToken = await verifyFirebaseIdToken(idToken);
+    
+    // Extract email from decoded token (handle both development and production modes)
+    const email = decodedToken.email || (decodedToken.payload && decodedToken.payload.email);
+    
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid Firebase token: missing email'
+      });
+      return;
+    }
+    
+    // Check if user exists in our database
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      // Create new user if they don't exist
+      const name = decodedToken.name || decodedToken.displayName || (decodedToken.payload && (decodedToken.payload.name || decodedToken.payload.displayName)) || 'Firebase User';
+      user = await User.create({
+        name,
+        email,
+        password: await hashPassword(crypto.randomBytes(20).toString('hex')), // Generate a random password
+        phone: '',
+        gender: '',
+        year: '',
+        branch: '',
+        isEmailVerified: true, // Firebase users are already verified
+        emailVerificationToken: undefined,
+        emailVerificationExpires: undefined
+      });
+    } else if (!user.isEmailVerified) {
+      // Update user as verified if they weren't already
+      user.isEmailVerified = true;
+      user.emailVerificationToken = undefined;
+      user.emailVerificationExpires = undefined;
+      await user.save();
+    }
+
+    // Send token response
+    sendTokenResponse(user, 200, res);
+  } catch (err: any) {
+    console.error('Firebase auth error:', err);
+    res.status(401).json({
+      success: false,
+      message: 'Firebase authentication failed'
+    });
+  }
 };

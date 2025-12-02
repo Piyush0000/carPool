@@ -24,6 +24,8 @@ export interface IUser extends Document {
   };
   studentIdUrl?: string;
   role: 'student' | 'admin';
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
   isEmailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -101,6 +103,12 @@ const UserSchema: Schema = new Schema({
   isEmailVerified: {
     type: Boolean,
     default: false
+  },
+  emailVerificationToken: {
+    type: String
+  },
+  emailVerificationExpires: {
+    type: Date
   }
 }, {
   timestamps: true

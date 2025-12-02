@@ -43,6 +43,7 @@ api.interceptors.response.use(
 export const authAPI = {
   register: (data: any) => api.post('/api/auth/register', data),
   login: (data: any) => api.post('/api/auth/login', data),
+  firebaseAuth: (idToken: string) => api.post('/api/auth/firebase', { idToken }),
   getMe: () => api.get('/api/auth/me'),
   logout: () => api.get('/api/auth/logout'),
 };
@@ -72,6 +73,7 @@ export const poolAPI = {
 // Group APIs
 export const groupAPI = {
   create: (data: any) => api.post('/api/group/create', data),
+  getAll: () => api.get('/api/group'),
   getMyGroups: () => api.get('/api/group/mygroups'),
   getById: (id: string) => api.get(`/api/group/${id}`),
   join: (id: string) => api.post(`/api/group/join/${id}`),
