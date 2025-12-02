@@ -39,9 +39,6 @@ const GroupChatPage: React.FC = () => {
 
       try {
         setLoading(true);
-        // Set current user
-        setCurrentUser(user);
-        
         // Load messages
         await loadMessages();
       } catch (err) {
@@ -182,7 +179,7 @@ const GroupChatPage: React.FC = () => {
             </svg>
           </button>
           <div>
-            <h1 className="text-xl font-bold text-white">{groupName}</h1>
+            <h1 className="text-xl font-bold text-white">Group Chat</h1>
             <p className="text-sm text-gray-300">{messages.length} messages</p>
           </div>
         </div>
