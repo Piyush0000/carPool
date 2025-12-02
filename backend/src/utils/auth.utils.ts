@@ -23,7 +23,7 @@ export const comparePassword = async (password: string, hashedPassword: string):
   return await bcrypt.compare(password, hashedPassword);
 };
 
-// Send JWT token in cookie
+// Send JWT token in cookie and response
 export const sendTokenResponse = (user: IUser, statusCode: number, res: Response): void => {
   const token = generateToken(user);
   
@@ -32,7 +32,8 @@ export const sendTokenResponse = (user: IUser, statusCode: number, res: Response
       Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
     ),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   };
   
   res
@@ -46,6 +47,17 @@ export const sendTokenResponse = (user: IUser, statusCode: number, res: Response
         name: user.name,
         email: user.email,
         role: user.role
+      },
+      userData: {
+        _id: user._id,
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        gender: user.gender,
+        year: user.year,
+        branch: user.branch
       }
     });
 };
