@@ -118,6 +118,28 @@ const FindPool: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Coming Soon: Cab Booking Promotion */}
+        <div className="mb-6 ridepool-card p-5 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl shadow-sm animate-pulse-slow">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 mt-1">
+              <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-purple-900">Booking Cabs by Group - Coming Soon!</h3>
+              <p className="mt-1 text-purple-700 text-sm">
+                We're building a feature to let groups book cabs directly. Stay tuned for group discounts and seamless booking!
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                Soon
+              </span>
+            </div>
+          </div>
+        </div>
+        
         <div className="mb-6 animate-fade-in">
           <h1 className="text-2xl font-bold text-gray-900">Find Pool</h1>
           <p className="mt-1 text-sm text-gray-700">Find students traveling on similar routes and schedules.</p>

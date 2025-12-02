@@ -145,7 +145,40 @@ const RidePoolDashboard: React.FC = () => {
                 </button>
               </div>
             </div>
-
+            
+            {/* Coming Soon: Cab Booking by Group */}
+            <div className="ridepool-card p-8 bg-gradient-to-r from-purple-900 to-indigo-800 border border-purple-700 shadow-lg">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <div className="p-4 rounded-lg bg-purple-500 bg-opacity-30">
+                    <svg className="h-8 w-8 text-purple-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-6 flex-1">
+                  <h3 className="text-2xl font-bold text-white">Booking Cabs by Group - Coming Soon!</h3>
+                  <p className="mt-4 text-lg text-purple-100 leading-relaxed">
+                    We're working on a new feature that will allow groups to book cabs directly through our platform. 
+                    Stay tuned for seamless cab booking experience tailored for your ride pool groups.
+                  </p>
+                  <div className="mt-6 flex items-center">
+                    <div className="flex space-x-2">
+                      <span className="px-3 py-1 bg-purple-600 bg-opacity-50 text-purple-200 rounded-full text-sm font-medium">Pre-Booking</span>
+                      <span className="px-3 py-1 bg-indigo-600 bg-opacity-50 text-indigo-200 rounded-full text-sm font-medium">Group Discounts</span>
+                      <span className="px-3 py-1 bg-pink-600 bg-opacity-50 text-pink-200 rounded-full text-sm font-medium">Real-time Tracking</span>
+                    </div>
+                  </div>
+                  <div className="mt-8">
+                    <button className="ridepool-btn ridepool-btn-secondary px-6 py-3 rounded-lg font-semibold opacity-75 cursor-not-allowed" disabled>
+                      Notify Me When Available
+                    </button>
+                    <p className="mt-3 text-sm text-purple-300">Launching in the next update</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             {/* Recent Activity */}
             <div className="ridepool-card p-8">
               <div className="flex items-center justify-between mb-10">

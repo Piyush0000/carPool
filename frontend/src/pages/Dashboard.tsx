@@ -73,6 +73,33 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Coming Soon: Cab Booking by Group */}
+        <div className="ridepool-card mb-8 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl shadow-sm animate-pulse-slow">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 mt-1">
+              <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-purple-900">Booking Cabs by Group - Coming Soon!</h3>
+              <p className="mt-1 text-purple-700 text-sm">
+                We're building a feature to let groups book cabs directly. Stay tuned for group discounts and seamless booking!
+              </p>
+              <div className="mt-3 flex items-center space-x-2">
+                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">Pre-Booking</span>
+                <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium">Group Discounts</span>
+                <span className="px-2 py-1 bg-pink-100 text-pink-800 rounded-full text-xs font-medium">Real-time Tracking</span>
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                Soon
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Quick Actions */}
         <div className="ridepool-card mb-8 animate-slideInRight">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>

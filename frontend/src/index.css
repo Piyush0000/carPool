@@ -35,3 +35,17 @@ code {
   box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
   transform: scale(1.05);
 }
+
+/* Pulse animation for promotional ads */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

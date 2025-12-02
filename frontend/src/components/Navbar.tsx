@@ -19,7 +19,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Link to="/dashboard" className="flex-shrink-0 flex items-center">
               <span className="text-xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent hover-lift">
-                Ride Pool
+                RideBuddy
               </span>
             </Link>
           </div>
