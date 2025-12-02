@@ -3,19 +3,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.matchPoolRequests = exports.deletePoolRequest = exports.getPoolRequest = exports.getPoolRequests = exports.createPoolRequest = void 0;
+exports.matchPoolRequests = exports.updatePoolStatus = exports.deletePoolRequest = exports.getMyPoolRequests = exports.getPoolRequest = exports.getAllPoolRequests = exports.createPoolRequest = void 0;
 const PoolRequest_model_1 = __importDefault(require("../models/PoolRequest.model"));
+const mongoose_1 = require("mongoose");
+const geoapify_utils_1 = require("../utils/geoapify.utils");
 const createPoolRequest = async (req, res) => {
     try {
         const { pickupLocation, dropLocation, dateTime, preferredGender, seatsNeeded, mode } = req.body;
+        if (!pickupLocation || !dropLocation || !dateTime) {
+            res.status(400).json({
+                success: false,
+                message: 'Pickup location, drop location, and date time are required'
+            });
+            return;
+        }
         const poolRequest = await PoolRequest_model_1.default.create({
             createdBy: req.user.id,
             pickupLocation,
             dropLocation,
             dateTime,
-            preferredGender,
-            seatsNeeded,
-            mode
+            preferredGender: preferredGender || 'Any',
+            seatsNeeded: seatsNeeded || 1,
+            mode: mode || 'Scheduled',
+            status: 'Open'
         });
         res.status(201).json({
             success: true,
@@ -30,11 +40,22 @@ const createPoolRequest = async (req, res) => {
     }
 };
 exports.createPoolRequest = createPoolRequest;
-const getPoolRequests = async (req, res) => {
+const getAllPoolRequests = async (req, res) => {
     try {
-        const poolRequests = await PoolRequest_model_1.default.find({ createdBy: req.user.id })
-            .populate('createdBy', 'name email')
-            .populate('matchedUsers', 'name email');
+        let query = {};
+        if (req.user.role !== 'admin') {
+            query = {
+                $or: [
+                    { createdBy: req.user.id },
+                    { status: 'Open' }
+                ]
+            };
+        }
+        const poolRequests = await PoolRequest_model_1.default.find(query)
+            .populate('createdBy', 'name email gender year branch')
+            .populate('matchedUsers', 'name email')
+            .sort({ dateTime: 1 })
+            .limit(50);
         res.status(200).json({
             success: true,
             count: poolRequests.length,
@@ -48,12 +69,20 @@ const getPoolRequests = async (req, res) => {
         });
     }
 };
-exports.getPoolRequests = getPoolRequests;
+exports.getAllPoolRequests = getAllPoolRequests;
 const getPoolRequest = async (req, res) => {
     try {
-        const poolRequest = await PoolRequest_model_1.default.findById(req.params.id)
-            .populate('createdBy', 'name email')
-            .populate('matchedUsers', 'name email');
+        const { id } = req.params;
+        if (!mongoose_1.Types.ObjectId.isValid(id)) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid pool request ID'
+            });
+            return;
+        }
+        const poolRequest = await PoolRequest_model_1.default.findById(id)
+            .populate('createdBy', 'name email gender year branch phone')
+            .populate('matchedUsers', 'name email gender year branch phone');
         if (!poolRequest) {
             res.status(404).json({
                 success: false,
@@ -74,6 +103,26 @@ const getPoolRequest = async (req, res) => {
     }
 };
 exports.getPoolRequest = getPoolRequest;
+const getMyPoolRequests = async (req, res) => {
+    try {
+        const poolRequests = await PoolRequest_model_1.default.find({ createdBy: req.user.id })
+            .populate('createdBy', 'name email')
+            .populate('matchedUsers', 'name email')
+            .sort({ dateTime: -1 });
+        res.status(200).json({
+            success: true,
+            count: poolRequests.length,
+            data: poolRequests
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Server Error'
+        });
+    }
+};
+exports.getMyPoolRequests = getMyPoolRequests;
 const deletePoolRequest = async (req, res) => {
     try {
         const poolRequest = await PoolRequest_model_1.default.findById(req.params.id);
@@ -91,7 +140,7 @@ const deletePoolRequest = async (req, res) => {
             });
             return;
         }
-        await poolRequest.remove();
+        await poolRequest.deleteOne();
         res.status(200).json({
             success: true,
             data: {}
@@ -105,12 +154,60 @@ const deletePoolRequest = async (req, res) => {
     }
 };
 exports.deletePoolRequest = deletePoolRequest;
+const updatePoolStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!['Open', 'Matched', 'Completed', 'Cancelled'].includes(status)) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid status'
+            });
+            return;
+        }
+        const poolRequest = await PoolRequest_model_1.default.findById(req.params.id);
+        if (!poolRequest) {
+            res.status(404).json({
+                success: false,
+                message: 'Pool request not found'
+            });
+            return;
+        }
+        if (poolRequest.createdBy.toString() !== req.user.id) {
+            res.status(403).json({
+                success: false,
+                message: 'Not authorized to update this pool request'
+            });
+            return;
+        }
+        poolRequest.status = status;
+        await poolRequest.save();
+        res.status(200).json({
+            success: true,
+            data: poolRequest
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Server Error'
+        });
+    }
+};
+exports.updatePoolStatus = updatePoolStatus;
 const matchPoolRequests = async (req, res) => {
     try {
         const { pickupLocation, dropLocation, dateTime, preferredGender } = req.body;
+        if (!pickupLocation || !dropLocation || !dateTime) {
+            res.status(400).json({
+                success: false,
+                message: 'Pickup location, drop location, and date time are required'
+            });
+            return;
+        }
+        const requestDateTime = new Date(dateTime);
         const timeRange = 25 * 60 * 1000;
-        const startTime = new Date(dateTime.getTime() - timeRange);
-        const endTime = new Date(dateTime.getTime() + timeRange);
+        const startTime = new Date(requestDateTime.getTime() - timeRange);
+        const endTime = new Date(requestDateTime.getTime() + timeRange);
         const matchingRequests = await PoolRequest_model_1.default.find({
             status: 'Open',
             createdBy: { $ne: req.user.id },
@@ -123,38 +220,38 @@ const matchPoolRequests = async (req, res) => {
                 { preferredGender: preferredGender },
                 { preferredGender: { $exists: false } }
             ]
-        }).populate('createdBy', 'name email liveLocation');
-        const matches = [];
-        const maxPickupDistance = 3000;
-        const maxDropDistance = 5000;
-        for (const request of matchingRequests) {
-            const pickupDistance = calculateDistance(pickupLocation.coordinates[1], pickupLocation.coordinates[0], request.pickupLocation.coordinates[1], request.pickupLocation.coordinates[0]);
-            const dropDistance = calculateDistance(dropLocation.coordinates[1], dropLocation.coordinates[0], request.dropLocation.coordinates[1], request.dropLocation.coordinates[0]);
-            if (pickupDistance <= maxPickupDistance && dropDistance <= maxDropDistance) {
-                const timeDifference = Math.abs(request.dateTime.getTime() - dateTime.getTime());
-                const timeScore = 1 - (timeDifference / (2 * timeRange));
-                const pickupScore = 1 - (pickupDistance / maxPickupDistance);
-                const dropScore = 1 - (dropDistance / maxDropDistance);
-                const matchScore = (timeScore + pickupScore + dropScore) / 3;
-                matches.push({
-                    request,
-                    matchScore: Math.round(matchScore * 100),
-                    distanceSimilarity: {
-                        pickup: pickupDistance,
-                        drop: dropDistance
-                    },
-                    timeSimilarity: timeDifference / (60 * 1000)
-                });
-            }
-        }
-        matches.sort((a, b) => b.matchScore - a.matchScore);
+        }).populate('createdBy', 'name email gender year branch phone');
+        const scoredMatches = matchingRequests.map(request => {
+            const pickupDistance = (0, geoapify_utils_1.calculateDistanceHaversine)(pickupLocation.coordinates[1], pickupLocation.coordinates[0], request.pickupLocation.coordinates[1], request.pickupLocation.coordinates[0]);
+            const dropDistance = (0, geoapify_utils_1.calculateDistanceHaversine)(dropLocation.coordinates[1], dropLocation.coordinates[0], request.dropLocation.coordinates[1], request.dropLocation.coordinates[0]);
+            const timeDiff = Math.abs(request.dateTime.getTime() - requestDateTime.getTime()) / (1000 * 60);
+            const distanceScore = Math.max(0, 40 - (pickupDistance + dropDistance) / 1000);
+            const timeScore = Math.max(0, 40 - timeDiff / 2);
+            const genderScore = preferredGender === request.preferredGender ||
+                request.preferredGender === 'Any' ||
+                !request.preferredGender ? 20 : 0;
+            const matchScore = Math.min(100, distanceScore + timeScore + genderScore);
+            return {
+                ...request.toObject(),
+                matchScore,
+                distanceSimilarity: {
+                    pickup: pickupDistance,
+                    drop: dropDistance
+                },
+                timeDifference: timeDiff
+            };
+        });
+        const filteredMatches = scoredMatches
+            .filter(match => match.matchScore >= 30)
+            .sort((a, b) => b.matchScore - a.matchScore);
         res.status(200).json({
             success: true,
-            count: matches.length,
-            data: matches
+            count: filteredMatches.length,
+            data: filteredMatches
         });
     }
     catch (err) {
+        console.error('Match pool requests error:', err);
         res.status(500).json({
             success: false,
             message: err.message || 'Server Error'

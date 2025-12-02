@@ -45,7 +45,7 @@ const UserSchema = new mongoose_1.Schema({
         required: true,
         unique: true,
         lowercase: true,
-        match: [/^[^\s@]+@[^\s@]+\.(edu\.in|ac\.in)$/, 'Please enter a valid educational email']
+        match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email']
     },
     password: {
         type: String,
@@ -55,11 +55,13 @@ const UserSchema = new mongoose_1.Schema({
     phone: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        default: 'N/A'
     },
     gender: {
         type: String,
-        enum: ['Male', 'Female', 'Other']
+        enum: ['Male', 'Female', 'Other'],
+        default: 'Other'
     },
     year: {
         type: String,
@@ -73,15 +75,13 @@ const UserSchema = new mongoose_1.Schema({
         home: {
             address: String,
             coordinates: {
-                type: [Number],
-                index: '2dsphere'
+                type: [Number]
             }
         },
         college: {
             address: String,
             coordinates: {
-                type: [Number],
-                index: '2dsphere'
+                type: [Number]
             }
         }
     },
@@ -91,8 +91,7 @@ const UserSchema = new mongoose_1.Schema({
     },
     liveLocation: {
         coordinates: {
-            type: [Number],
-            index: '2dsphere'
+            type: [Number]
         }
     },
     studentIdUrl: {
@@ -106,6 +105,12 @@ const UserSchema = new mongoose_1.Schema({
     isEmailVerified: {
         type: Boolean,
         default: false
+    },
+    emailVerificationToken: {
+        type: String
+    },
+    emailVerificationExpires: {
+        type: Date
     }
 }, {
     timestamps: true

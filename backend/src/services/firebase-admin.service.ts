@@ -35,9 +35,18 @@ export const verifyFirebaseIdToken = async (idToken: string) => {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         return decodedToken;
       } catch (error) {
-        // If verification fails, decode the token manually
-        const decodedToken = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
-        return decodedToken;
+        // If verification fails, try to decode the token manually
+        try {
+          const tokenParts = idToken.split('.');
+          if (tokenParts.length !== 3) {
+            throw new Error('Invalid JWT token format');
+          }
+          const decodedToken = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+          return decodedToken;
+        } catch (decodeError) {
+          console.error('Error decoding token manually:', decodeError);
+          throw new Error('Invalid Firebase ID token');
+        }
       }
     }
     

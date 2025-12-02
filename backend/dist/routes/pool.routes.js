@@ -11,11 +11,15 @@ router.use(auth_middleware_1.protect);
 router.route('/create')
     .post(pool_controller_1.createPoolRequest);
 router.route('/requests')
-    .get(pool_controller_1.getPoolRequests);
+    .get(pool_controller_1.getAllPoolRequests);
+router.route('/my-requests')
+    .get(pool_controller_1.getMyPoolRequests);
 router.route('/match')
     .post(pool_controller_1.matchPoolRequests);
 router.route('/:id')
     .get(pool_controller_1.getPoolRequest)
     .delete(pool_controller_1.deletePoolRequest);
+router.route('/:id/status')
+    .patch(pool_controller_1.updatePoolStatus);
 exports.default = router;
 //# sourceMappingURL=pool.routes.js.map

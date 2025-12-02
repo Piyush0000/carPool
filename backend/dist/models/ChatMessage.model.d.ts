@@ -8,10 +8,10 @@ export interface IChatMessage extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
-declare const ChatMessage: mongoose.Model<IChatMessage, {}, {}, {}, mongoose.Document<unknown, {}, IChatMessage, {}, mongoose.DefaultSchemaOptions> & IChatMessage & Required<{
+declare const ChatMessage: mongoose.Model<IChatMessage, {}, {}, {}, mongoose.Document<unknown, {}, IChatMessage, {}, {}> & IChatMessage & Required<{
     _id: mongoose.Types.ObjectId;
 }> & {
     __v: number;
-}, any, IChatMessage>;
+}, any>;
 export default ChatMessage;
 //# sourceMappingURL=ChatMessage.model.d.ts.map
