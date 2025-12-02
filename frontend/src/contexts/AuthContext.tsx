@@ -73,14 +73,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loadUser = async () => {
     try {
       const res = await axios.get('/api/auth/me');
+      // Handle both possible response structures
+      const userData = res.data.data || res.data.user;
+      
       // Ensure the user object has the correct structure
-      const userData = {
-        id: res.data.data._id || res.data.data.id,
-        name: res.data.data.name,
-        email: res.data.data.email,
-        role: res.data.data.role
+      const normalizedUser = {
+        id: userData._id || userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role
       };
-      setUser(userData);
+      setUser(normalizedUser);
     } catch (err) {
       console.error('Error loading user:', err);
       logout();
@@ -93,19 +96,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       const res = await axios.post('/api/auth/login', { email, password });
-      const { token, user } = res.data;
+      const { token } = res.data;
+      
+      // Handle both possible response structures
+      const userData = res.data.userData || res.data.user;
       
       // Ensure the user object has the correct structure
-      const userData = {
-        id: user._id || user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
+      const normalizedUser = {
+        id: userData._id || userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role
       };
       
       localStorage.setItem('token', token);
       setToken(token);
-      setUser(userData);
+      setUser(normalizedUser);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } catch (err: any) {
       // Provide better error message for unverified emails
@@ -160,32 +166,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Get the ID token from Firebase user
       const idToken = await user.getIdToken();
       
+      console.log('Firebase user:', user);
+      console.log('ID Token:', idToken);
+      
       // Send the token to your backend for verification
       const res = await axios.post('/api/auth/firebase', { idToken });
       
+      console.log('Backend response:', res.data);
+      
       // Validate response data
-      if (!res.data) {
+      if (!res.data || !res.data.success) {
         throw new Error('Invalid response from authentication server');
       }
       
-      const { token, userData } = res.data;
+      const { token } = res.data;
       
-      // Validate user data
+      // Handle both possible response structures
+      const userData = res.data.userData || res.data.user;
+      
       if (!userData) {
         throw new Error('User data not received from authentication server');
       }
       
       // Ensure the user object has the correct structure
-      const userObject = {
+      const normalizedUser = {
         id: userData._id || userData.id || user.uid,
-        name: userData.name || user.displayName,
-        email: userData.email || user.email,
-        role: userData.role || 'user'
+        name: userData.name || user.displayName || 'User',
+        email: userData.email || user.email || '',
+        role: userData.role || 'student'
       };
+      
+      console.log('Normalized user:', normalizedUser);
       
       localStorage.setItem('token', token);
       setToken(token);
-      setUser(userObject);
+      setUser(normalizedUser);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } catch (error: any) {
       console.error('Google sign-in error:', error);

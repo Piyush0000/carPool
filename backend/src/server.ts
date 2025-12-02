@@ -6,7 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import http from 'http';
 import { Server } from 'socket.io';
-import { developmentConfig } from './config/development.config';
+import config from './config';
 
 // Load environment variables
 dotenv.config();
@@ -22,17 +22,31 @@ import locationRoutes from './routes/location.routes';
 import notificationRoutes from './routes/notification.routes';
 import geoapifyRoutes from './routes/geoapify.routes';
 
-// Use config from development.config.ts
-const config = developmentConfig;
-
 // Initialize app
 const app = express();
 const server = http.createServer(app);
 
-// Socket.io configuration using config
+// Get allowed origins from config
+const allowedOrigins = Array.isArray(config.security.cors.origin) 
+  ? config.security.cors.origin 
+  : [config.security.cors.origin];
+
+console.log('Allowed CORS Origins:', allowedOrigins);
+
+// Socket.io configuration with proper CORS
 const io = new Server(server, {
   cors: {
-    origin: config.security.cors.origin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        callback(null, true);
+      } else {
+        console.warn(`Blocked CORS request from origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: config.security.cors.methods,
     credentials: config.security.cors.credentials,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -44,6 +58,9 @@ const io = new Server(server, {
 // Make io accessible to routes
 app.set('io', io);
 
+// Trust proxy (important for Render deployment)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   crossOriginOpenerPolicy: false,
@@ -51,39 +68,42 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS configuration - SIMPLE and TypeScript compliant
+// CORS configuration with dynamic origin checking
 app.use(cors({
-  origin: config.security.cors.origin,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked CORS request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: config.security.cors.credentials,
-  methods: config.security.cors.methods
+  methods: config.security.cors.methods,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 600 // 10 minutes
 }));
 
-// Manual CORS headers for preflight requests
+// Manual CORS headers for additional support
 app.use((req: Request, res: Response, next: NextFunction): void => {
   const origin = req.headers.origin;
   
-  // Set CORS headers
-  if (origin) {
-    const allowedOrigins = config.security.cors.origin;
-    
-    // Check if origin is allowed
-    if (Array.isArray(allowedOrigins)) {
-      if (allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-      }
-    } else if (typeof allowedOrigins === 'string' && allowedOrigins === origin) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
+  if (origin && (allowedOrigins.includes(origin) || allowedOrigins.includes('*'))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Range, X-Content-Range');
   }
-  
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
-    return; // Explicitly return to satisfy TypeScript
+    return;
   }
   
   next();
@@ -112,7 +132,7 @@ connectDB();
 
 // Log incoming requests for debugging
 app.use((req: Request, res: Response, next: NextFunction) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin || 'none'}`);
   next();
 });
 
@@ -137,7 +157,7 @@ app.get('/api/health', (req: Request, res: Response) => {
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     uptime: process.uptime(),
     cors: {
-      allowedOrigins: config.security.cors.origin,
+      allowedOrigins: allowedOrigins,
       requestOrigin: req.headers.origin || 'none'
     }
   });
@@ -169,14 +189,12 @@ const userSockets = new Map<string, string>();
 io.on('connection', (socket) => {
   console.log('🔌 User connected:', socket.id);
 
-  // User authentication and registration
   socket.on('register_user', (userId: string) => {
     userSockets.set(userId, socket.id);
     socket.join(`user_${userId}`);
     console.log(`👤 User ${userId} registered with socket ${socket.id}`);
   });
 
-  // Join room for group chat
   socket.on('join_room', (roomId: string) => {
     socket.join(roomId);
     console.log(`👥 User ${socket.id} joined room ${roomId}`);
@@ -187,7 +205,6 @@ io.on('connection', (socket) => {
     });
   });
 
-  // Leave room
   socket.on('leave_room', (roomId: string) => {
     socket.leave(roomId);
     console.log(`👋 User ${socket.id} left room ${roomId}`);
@@ -198,13 +215,11 @@ io.on('connection', (socket) => {
     });
   });
 
-  // Handle chat messages
   socket.on('send_message', (data: { roomId: string; message: any }) => {
     socket.to(data.roomId).emit('receive_message', data.message);
     console.log(`💬 Message sent to room ${data.roomId}`);
   });
 
-  // Handle typing indicators
   socket.on('typing', (data: { roomId: string; userId: string; userName: string }) => {
     socket.to(data.roomId).emit('user_typing', {
       userId: data.userId,
@@ -218,13 +233,11 @@ io.on('connection', (socket) => {
     });
   });
 
-  // Handle ride updates
   socket.on('ride_update', (data: { rideId: string; update: any }) => {
     socket.to(data.rideId).emit('ride_updated', data.update);
     console.log(`🚗 Ride update for ${data.rideId}`);
   });
 
-  // Handle user location updates
   socket.on('location_update', (data: { userId: string; location: any; groupId?: string }) => {
     if (data.groupId) {
       socket.to(`group_${data.groupId}`).emit('user_location_updated', data);
@@ -233,7 +246,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle notifications
   socket.on('send_notification', (data: { userId: string; notification: any }) => {
     const targetSocketId = userSockets.get(data.userId);
     if (targetSocketId) {
@@ -242,7 +254,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle pool match notifications
   socket.on('pool_matched', (data: { userIds: string[]; poolData: any }) => {
     data.userIds.forEach(userId => {
       const socketId = userSockets.get(userId);
@@ -253,7 +264,6 @@ io.on('connection', (socket) => {
     console.log(`🎯 Pool match notification sent to ${data.userIds.length} users`);
   });
 
-  // Handle group invitations
   socket.on('group_invitation', (data: { userId: string; groupData: any }) => {
     const socketId = userSockets.get(data.userId);
     if (socketId) {
@@ -262,7 +272,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle disconnection
   socket.on('disconnect', () => {
     console.log('❌ User disconnected:', socket.id);
     
@@ -375,7 +384,7 @@ server.listen(PORT, () => {
 🌐 URL: http://localhost:${PORT}
 📚 API Docs: http://localhost:${PORT}/api/health
 🔌 WebSocket: ws://localhost:${PORT}
-🌍 Allowed Origins: ${JSON.stringify(config.security.cors.origin)}
+🌍 Allowed Origins: ${JSON.stringify(allowedOrigins)}
 📊 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connected' : '❌ Disconnected'}
   `);
 });

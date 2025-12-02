@@ -1,4 +1,8 @@
 // Production configuration settings
+// Parse allowed origins from environment variable
+const allowedOriginsStr = process.env.ALLOWED_ORIGINS || 'https://car-pool-flax.vercel.app';
+const allowedOrigins = allowedOriginsStr.split(',').map(origin => origin.trim());
+
 export const productionConfig = {
   // MongoDB configuration
   mongodb: {
@@ -20,9 +24,9 @@ export const productionConfig = {
       expiresIn: process.env.JWT_EXPIRE || '7d'
     },
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: allowedOrigins,
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH']
     },
     rateLimit: {
       windowMs: 15 * 60 * 1000, // 15 minutes

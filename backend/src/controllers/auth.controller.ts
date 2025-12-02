@@ -4,7 +4,6 @@ import { hashPassword, comparePassword, sendTokenResponse } from '../utils/auth.
 import { sendEmailVerification } from '../utils/email.utils';
 import crypto from 'crypto';
 import { verifyFirebaseIdToken } from '../services/firebase-admin.service';
-import axios from 'axios';
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -14,10 +13,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const { name, email, password, phone, gender, year, branch } = req.body;
 
     // Validate required fields
-    if (!name || !email || !password || !phone || !gender || !year || !branch) {
+    if (!name || !email || !password) {
       res.status(400).json({
         success: false,
-        message: 'All fields are required'
+        message: 'Name, email, and password are required'
       });
       return;
     }
@@ -48,38 +47,52 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Create user
+    // Create user with defaults for optional fields
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      phone,
-      gender,
-      year,
-      branch,
+      phone: phone || 'N/A',
+      gender: gender || 'Other',
+      year: year || 'N/A',
+      branch: branch || 'N/A',
       emailVerificationToken,
       emailVerificationExpires,
       isEmailVerified: false
     });
 
-    // Send verification email
+    // Send verification email (don't fail registration if email fails)
     try {
       await sendEmailVerification(user, emailVerificationToken);
       
       res.status(201).json({
         success: true,
-        message: 'User registered successfully. Please check your email for verification link.'
+        message: 'User registered successfully. Please check your email for verification link.',
+        data: {
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email
+          }
+        }
       });
     } catch (emailError) {
-      // If email fails, delete the user and return error
-      await User.findByIdAndDelete(user._id);
-      
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send verification email. Please try again.'
+      console.error('Email sending failed:', emailError);
+      // Still return success but with different message
+      res.status(201).json({
+        success: true,
+        message: 'User registered successfully. Email verification may be delayed.',
+        data: {
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email
+          }
+        }
       });
     }
   } catch (err: any) {
+    console.error('Registration error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Server Error'
@@ -134,6 +147,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     sendTokenResponse(user, 200, res);
   } catch (err: any) {
+    console.error('Login error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Server Error'
@@ -153,6 +167,7 @@ export const getMe = async (req: any, res: Response): Promise<void> => {
       data: user
     });
   } catch (err: any) {
+    console.error('Get me error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Server Error'
@@ -217,6 +232,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
       message: 'Email verified successfully'
     });
   } catch (err: any) {
+    console.error('Email verification error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Server Error'
@@ -231,13 +247,42 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
   try {
     const { idToken } = req.body;
 
+    if (!idToken) {
+      res.status(400).json({
+        success: false,
+        message: 'ID token is required'
+      });
+      return;
+    }
+
     // Verify Firebase ID token
     const decodedToken = await verifyFirebaseIdToken(idToken);
     
-    // Extract email from decoded token (handle both development and production modes)
-    const email = decodedToken.email || (decodedToken.payload && decodedToken.payload.email);
+    // Extract email from decoded token with multiple fallback options
+    let email: string | undefined;
+    let name: string | undefined;
+    
+    // Try different possible locations for email and name
+    if (decodedToken.email) {
+      email = decodedToken.email;
+    } else if (decodedToken.payload?.email) {
+      email = decodedToken.payload.email;
+    } else if (decodedToken.firebase?.identities?.email?.[0]) {
+      email = decodedToken.firebase.identities.email[0];
+    }
+    
+    if (decodedToken.name) {
+      name = decodedToken.name;
+    } else if (decodedToken.displayName) {
+      name = decodedToken.displayName;
+    } else if (decodedToken.payload?.name) {
+      name = decodedToken.payload.name;
+    } else if (decodedToken.payload?.displayName) {
+      name = decodedToken.payload.displayName;
+    }
     
     if (!email) {
+      console.error('Decoded token structure:', JSON.stringify(decodedToken, null, 2));
       res.status(400).json({
         success: false,
         message: 'Invalid Firebase token: missing email'
@@ -250,11 +295,11 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
     
     if (!user) {
       // Create new user if they don't exist
-      const name = decodedToken.name || decodedToken.displayName || (decodedToken.payload && (decodedToken.payload.name || decodedToken.payload.displayName)) || 'Firebase User';
+      const userName = name || email.split('@')[0] || 'Firebase User';
       user = await User.create({
-        name,
+        name: userName,
         email,
-        password: await hashPassword(crypto.randomBytes(20).toString('hex')), // Generate a random password
+        password: await hashPassword(crypto.randomBytes(20).toString('hex')),
         phone: 'N/A',
         gender: 'Other',
         year: 'N/A',
@@ -271,13 +316,13 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
       await user.save();
     }
 
-    // Send token response
+    // Send token response with proper user data structure
     sendTokenResponse(user, 200, res);
   } catch (err: any) {
     console.error('Firebase auth error:', err);
     res.status(401).json({
       success: false,
-      message: 'Firebase authentication failed'
+      message: 'Firebase authentication failed: ' + (err.message || 'Unknown error')
     });
   }
 };
