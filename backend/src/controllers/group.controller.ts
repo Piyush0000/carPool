@@ -137,7 +137,7 @@ export const joinGroup = async (req: any, res: Response): Promise<void> => {
     
     // Check if user is already a member
     const isMember = group.members.some(member => 
-      member.user.toString() === req.user.id
+      member.user._id.toString() === req.user.id.toString()
     );
     
     console.log('User is already member:', isMember);
@@ -220,7 +220,7 @@ export const leaveGroup = async (req: any, res: Response): Promise<void> => {
     
     // Check if user is a member
     const memberIndex = group.members.findIndex(member => 
-      member.user.toString() === req.user.id
+      member.user._id.toString() === req.user.id.toString()
     );
     
     if (memberIndex === -1) {
@@ -276,7 +276,7 @@ export const lockGroup = async (req: any, res: Response): Promise<void> => {
     
     // Check if user is admin of the group
     const isAdmin = group.members.some(member => 
-      member.user.toString() === req.user.id && member.role === 'admin'
+      member.user._id.toString() === req.user.id.toString() && member.role === 'admin'
     );
     
     if (!isAdmin) {
@@ -352,10 +352,13 @@ export const getUserGroups = async (req: any, res: Response): Promise<void> => {
 // @access  Private (Members only)
 export const getGroup = async (req: any, res: Response): Promise<void> => {
   try {
+    console.log('Getting group details:', req.params.groupId, 'User ID:', req.user.id, 'User ID type:', typeof req.user.id);
+    
     const group = await Group.findById(req.params.groupId)
       .populate('members.user', 'name email phone year branch');
     
     if (!group) {
+      console.log('Group not found:', req.params.groupId);
       res.status(404).json({
         success: false,
         message: 'Group not found'
@@ -363,10 +366,18 @@ export const getGroup = async (req: any, res: Response): Promise<void> => {
       return;
     }
     
+    console.log('Found group:', group._id, 'Members:', group.members.map(m => ({
+      userId: m.user._id.toString(),
+      userType: typeof m.user._id,
+      comparison: m.user._id.toString() === req.user.id.toString()
+    })));
+    
     // Check if user is a member
     const isMember = group.members.some(member => 
-      member.user.toString() === req.user.id
+      member.user._id.toString() === req.user.id.toString()
     );
+    
+    console.log('User is member:', isMember);
     
     if (!isMember) {
       res.status(403).json({
@@ -381,6 +392,7 @@ export const getGroup = async (req: any, res: Response): Promise<void> => {
       data: group
     });
   } catch (err: any) {
+    console.error('Error getting group:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Server Error'

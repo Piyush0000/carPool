@@ -38,24 +38,39 @@ const GroupDetail: React.FC = () => {
   const handleJoinGroup = async () => {
     try {
       if (!id) {
-        alert('Invalid group ID.');
+        setError('Invalid group ID.');
         return;
       }
       
+      setLoading(true);
+      setError('');
+      
       await groupAPI.join(id);
+      
       // Refresh the page to load the group data
       window.location.reload();
     } catch (err: any) {
       console.error('Error joining group:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to join group';
+      
       if (err.response?.status === 400) {
-        alert(`Error joining group: ${err.response.data.message || 'Group is full or you are already a member.'}`);
+        if (errorMessage.includes('already a member')) {
+          setError('You are already a member of this group. Refreshing...');
+          setTimeout(() => window.location.reload(), 1500);
+        } else if (errorMessage.includes('full')) {
+          setError('This group is full. Please try another group.');
+        } else {
+          setError(errorMessage);
+        }
       } else if (err.response?.status === 404) {
-        alert('Group not found.');
+        setError('Group not found.');
       } else if (err.response?.status === 401) {
-        alert('You must be logged in to join a group.');
+        setError('You must be logged in to join a group.');
       } else {
-        alert(`Failed to join group: ${err.message || 'Please try again.'}`);
+        setError(`Failed to join group: ${errorMessage}`);
       }
+      
+      setLoading(false);
     }
   };
 
@@ -446,7 +461,7 @@ const GroupDetail: React.FC = () => {
           
           {/* Map and Chat */}
           <div className="lg:col-span-2 space-y-6">
-            <GroupMap groupId={id || ''} />
+            <GroupMap groupId={id || ''} groupData={group} />
             
             <div className="ridepool-card flex flex-col h-[calc(100vh-400px)]">
               <div className="px-4 py-5 sm:px-6 border-b border-gray-700">

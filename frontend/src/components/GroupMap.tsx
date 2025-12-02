@@ -1,10 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { groupAPI } from '../services/api.service';
-
-interface GroupMapProps {
-  groupId: string;
-  currentUserLocation?: { latitude: number; longitude: number };
-}
 
 interface GroupMember {
   _id: string;
@@ -14,20 +8,37 @@ interface GroupMember {
   };
 }
 
-const GroupMap: React.FC<GroupMapProps> = ({ groupId }) => {
+interface GroupMapProps {
+  groupId?: string;
+  groupData?: any; // Add groupData prop
+}
+
+const GroupMap: React.FC<GroupMapProps> = ({ groupId, groupData }) => {
+  const [loading, setLoading] = useState(false);
   const [members, setMembers] = useState<GroupMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const mapRef = useRef<HTMLDivElement>(null);
   const [mapData, setMapData] = useState<any>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
 
   // Load group members and create map
   useEffect(() => {
     // Don't load if groupId is empty or invalid
     if (groupId && groupId !== 'create') {
       loadGroupMembers();
+    } else if (groupData) {
+      // Use provided groupData instead of fetching
+      const membersWithLocations = groupData.members
+        .map((member: any) => ({
+          _id: member.user._id,
+          name: member.user.name,
+          liveLocation: member.user.liveLocation
+        }))
+        .filter((member: GroupMember) => member.liveLocation);
+      
+      setMembers(membersWithLocations);
+      createMap(membersWithLocations);
     }
-  }, [groupId]);
+  }, [groupId, groupData]);
 
   const loadGroupMembers = async () => {
     try {
@@ -40,19 +51,25 @@ const GroupMap: React.FC<GroupMapProps> = ({ groupId }) => {
         return;
       }
       
-      // Fetch real group members with their locations
-      const response = await groupAPI.getById(groupId);
-      const groupData = response.data.data;
+      // If we already have groupData, use it instead of fetching
+      if (groupData) {
+        const membersWithLocations = groupData.members
+          .map((member: any) => ({
+            _id: member.user._id,
+            name: member.user.name,
+            liveLocation: member.user.liveLocation
+          }))
+          .filter((member: GroupMember) => member.liveLocation);
+        
+        setMembers(membersWithLocations);
+        createMap(membersWithLocations);
+        setLoading(false);
+        return;
+      }
       
-      // Extract members with their locations
-      const membersWithLocations = groupData.members.map((member: any) => ({
-        _id: member.user._id,
-        name: member.user.name,
-        liveLocation: member.user.liveLocation
-      })).filter((member: GroupMember) => member.liveLocation);
-      
-      setMembers(membersWithLocations);
-      createMap(membersWithLocations);
+      // This part should not be reached if we're properly passing groupData
+      setError('Group data not available');
+      setLoading(false);
     } catch (err) {
       setError('Failed to load group members');
       console.error('Error loading group members:', err);
