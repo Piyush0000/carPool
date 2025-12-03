@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import CopyToClipboard from 'react-copy-to-clipboard';
 
 interface GroupUberLinkGeneratorProps {
   groupId: string;
@@ -9,8 +8,14 @@ const GroupUberLinkGenerator: React.FC<GroupUberLinkGeneratorProps> = ({ groupId
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    navigator.clipboard.writeText(`https://rideshare.example.com/join/${groupId}`)
+      .then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
   };
 
   // In a real implementation, this would generate a proper Uber link
@@ -31,11 +36,12 @@ const GroupUberLinkGenerator: React.FC<GroupUberLinkGeneratorProps> = ({ groupId
           readOnly
           className="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <CopyToClipboard text={uberLink} onCopy={handleCopy}>
-          <button className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition-colors">
-            {isCopied ? 'Copied!' : 'Copy'}
-          </button>
-        </CopyToClipboard>
+        <button 
+          onClick={handleCopy}
+          className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition-colors"
+        >
+          {isCopied ? 'Copied!' : 'Copy'}
+        </button>
       </div>
       
       {isCopied && (
