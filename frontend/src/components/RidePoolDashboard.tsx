@@ -5,7 +5,8 @@ import axios from 'axios';
 const RidePoolDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
-    totalGroups: 0
+    totalGroups: 0,
+    userGroups: 0
   });
   const [recentGroups, setRecentGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,16 +19,19 @@ const RidePoolDashboard: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch user groups
-      const groupsResponse = await axios.get('/api/group/mygroups');
+      // Fetch all groups
+      const allGroupsResponse = await axios.get('/api/group');
       
-      // Mock stats data (in a real app, this would come from the backend)
+      // Fetch user groups
+      const userGroupsResponse = await axios.get('/api/group/mygroups');
+      
       setStats({
-        totalGroups: groupsResponse.data.data.length
+        totalGroups: allGroupsResponse.data.data.length,
+        userGroups: userGroupsResponse.data.data.length
       });
       
       // Set recent groups
-      setRecentGroups(groupsResponse.data.data.slice(0, 3));
+      setRecentGroups(userGroupsResponse.data.data.slice(0, 3));
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -196,7 +200,7 @@ const RidePoolDashboard: React.FC = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-12">
             <div className="ridepool-dashboard-card p-8">
               <div className="flex items-center">
                 <div className="p-4 rounded-lg" style={{ background: `rgba(255, 107, 107, 0.2)` }}>
@@ -210,6 +214,23 @@ const RidePoolDashboard: React.FC = () => {
                   </h3>
                   <p className="text-3xl font-bold mt-1" style={{ color: styles.textDark }}>
                     {stats.totalGroups}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="ridepool-dashboard-card p-8">
+              <div className="flex items-center">
+                <div className="p-4 rounded-lg" style={{ background: `rgba(78, 205, 196, 0.2)` }}>
+                  <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.secondary }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="ml-6">
+                  <h3 className="text-lg font-medium" style={{ color: styles.textLight }}>
+                    Your Groups
+                  </h3>
+                  <p className="text-3xl font-bold mt-1" style={{ color: styles.textDark }}>
+                    {stats.userGroups}
                   </p>
                 </div>
               </div>
