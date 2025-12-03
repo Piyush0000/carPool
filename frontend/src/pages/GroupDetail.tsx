@@ -52,6 +52,23 @@ const GroupDetail: React.FC = () => {
   const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Helper function to format message time safely
+  const formatMessageTime = (timestamp: string | Date | undefined): string => {
+    if (!timestamp) return 'Just now';
+    
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return 'Just now';
+      
+      return date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } catch (error) {
+      return 'Just now';
+    }
+  };
+
   const handleJoinGroup = async () => {
     try {
       if (!id) {
@@ -146,10 +163,7 @@ const GroupDetail: React.FC = () => {
               id: message._id,
               user: message.sender?.name || 'Unknown',
               content: message.content,
-              time: new Date(message.timestamp).toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              }),
+              time: formatMessageTime(message.createdAt),
               senderId: message.sender?._id
             }));
             
@@ -190,10 +204,7 @@ const GroupDetail: React.FC = () => {
             id: message._id,
             user: message.sender?.name || 'Unknown',
             content: message.content,
-            time: new Date(message.timestamp).toLocaleTimeString([], { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            }),
+            time: formatMessageTime(message.createdAt),
             senderId: message.sender?._id
           }));
           

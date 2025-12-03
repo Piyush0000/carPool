@@ -13,6 +13,8 @@ import RidePoolDashboard from './components/RidePoolDashboard';
 import GroupsPage from './pages/GroupsPage';
 import GroupChatPage from './pages/GroupChatPage';
 import EmailVerification from './pages/EmailVerification';
+import AdminPanel from './pages/AdminPanel';
+import AdminRoute from './components/AdminRoute';
 import './index.css';
 import './styles/RidePool.css';
 
@@ -100,6 +102,18 @@ function App() {
                       <FindPool />
                     </main>
                   </div>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminRoute>
+                    <div className="min-h-screen flex flex-col">
+                      <Navbar />
+                      <main className="flex-grow pt-16">
+                        <AdminPanel />
+                      </main>
+                    </div>
+                  </AdminRoute>
                 </ProtectedRoute>
               } />
               <Route path="/group/:id" element={
