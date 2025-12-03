@@ -5,10 +5,20 @@ import { useNavigate } from 'react-router-dom';
 import { groupAPI } from '../services/api.service';
 import MapInput from '../components/MapInput';
 
+interface GroupMember {
+  user: {
+    _id: string;
+    name: string;
+    year?: string;
+    branch?: string;
+  };
+  role: string;
+}
+
 interface Group {
   _id: string;
   groupName: string;
-  members: any[];
+  members: GroupMember[];
   route: {
     pickup: { address: string };
     drop: { address: string };
@@ -447,6 +457,35 @@ const GroupsPage: React.FC = () => {
                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                       </svg>
                       {group.members.length}/{group.seatCount}
+                    </div>
+                    
+                    {/* Member details with year and branch */}
+                    <div className="flex -space-x-2">
+                      {group.members.slice(0, 3).map((member, index) => (
+                        <div 
+                          key={member.user._id} 
+                          className="relative group"
+                          title={`${member.user.name}${member.user.year ? ` (${member.user.year})` : ''}${member.user.branch ? ` - ${member.user.branch}` : ''}`}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                            {member.user.name.charAt(0)}
+                          </div>
+                          {member.user.year && (
+                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                              <div className="text-center">
+                                <div className="font-medium">{member.user.name}</div>
+                                <div>{member.user.year}{member.user.branch ? ` • ${member.user.branch}` : ''}</div>
+                              </div>
+                              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 w-2 h-2 bg-gray-800 rotate-45"></div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {group.members.length > 3 && (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold border-2 border-white">
+                          +{group.members.length - 3}
+                        </div>
+                      )}
                     </div>
                     
                     {viewMode === 'all' && (

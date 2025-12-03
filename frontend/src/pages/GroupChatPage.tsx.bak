@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  sendGroupMessage, 
-  getGroupMessages, 
-  subscribeToGroupMessages 
-} from '../services/firebase-chat.service';
+import { format } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Message {
@@ -14,7 +10,7 @@ interface Message {
     uid: string;
     name: string;
   };
-  timestamp: number;
+  timestamp: number | Date | string;
   type: string;
 }
 
@@ -71,16 +67,38 @@ const GroupChatPage: React.FC = () => {
     try {
       const response = await chatAPI.getHistory(groupId);
       
-      const formattedMessages: Message[] = response.data.data.map((message: any) => ({
-        id: message._id || message.id || '',
-        text: message.content,
-        sender: {
-          uid: message.sender?._id || message.sender?.id || message.sender,
-          name: message.sender?.name || 'Unknown'
-        },
-        timestamp: new Date(message.timestamp).getTime() / 1000 || Date.now() / 1000,
-        type: 'text'
-      }));
+      const formattedMessages: Message[] = response.data.data.map((message: any) => {
+        // Parse timestamp - handle various formats
+        let timestamp = Date.now();
+        
+        if (message.timestamp) {
+          // Try to parse the timestamp
+          const parsedTimestamp = new Date(message.timestamp);
+          if (!isNaN(parsedTimestamp.getTime())) {
+            timestamp = parsedTimestamp.getTime();
+          } else {
+            console.warn('Invalid timestamp:', message.timestamp);
+          }
+        }
+        
+        return {
+          id: message._id || message.id || '',
+          text: message.content,
+          sender: {
+            uid: message.sender?._id || message.sender?.id || message.sender,
+            name: message.sender?.name || 'Unknown'
+          },
+          timestamp: timestamp,
+          type: 'text'
+        };
+      });
+
+      // Sort messages by timestamp (oldest first)
+      formattedMessages.sort((a, b) => {
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
+        return timeA - timeB;
+      });
 
       setMessages(formattedMessages);
       setError(null);
@@ -97,13 +115,11 @@ const GroupChatPage: React.FC = () => {
     if (!newMessage.trim() || !groupId || !user) return;
     
     // Additional safety checks
-    // Handle both _id and id properties
     const userId = (user as any).id || (user as any)._id;
     const userName = user.name;
     
     if (!userId || !userName) {
       console.error('User ID or name is missing');
-      console.error('User object details:', user);
       setError('Unable to send message: User information is incomplete.');
       return;
     }
@@ -121,6 +137,9 @@ const GroupChatPage: React.FC = () => {
       // Clear input
       setNewMessage('');
       setError(null);
+      
+      // Reload messages to get the latest
+      await loadMessages();
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
@@ -129,9 +148,69 @@ const GroupChatPage: React.FC = () => {
     }
   };
 
-  // Format timestamp
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // Format timestamp using date-fns
+  const formatTime = (timestamp: number | Date | string) => {
+    try {
+      let date: Date;
+      
+      if (timestamp instanceof Date) {
+        date = timestamp;
+      } else if (typeof timestamp === 'number') {
+        date = new Date(timestamp);
+      } else if (typeof timestamp === 'string') {
+        date = new Date(timestamp);
+      } else {
+        date = new Date();
+      }
+      
+      // Validate the date
+      if (isNaN(date.getTime())) {
+        date = new Date(); // Fallback to current time
+      }
+      
+      return format(date, 'hh:mm a'); // Example: "02:30 PM"
+      // Alternative formats you can use:
+      // return format(date, 'HH:mm'); // 24-hour format: "14:30"
+      // return format(date, 'h:mm a'); // "2:30 PM"
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return format(new Date(), 'hh:mm a');
+    }
+  };
+
+  // Format date for message grouping (optional enhancement)
+  const formatDate = (timestamp: number | Date | string) => {
+    try {
+      let date: Date;
+      
+      if (timestamp instanceof Date) {
+        date = timestamp;
+      } else if (typeof timestamp === 'number') {
+        date = new Date(timestamp);
+      } else if (typeof timestamp === 'string') {
+        date = new Date(timestamp);
+      } else {
+        date = new Date();
+      }
+      
+      if (isNaN(date.getTime())) {
+        date = new Date();
+      }
+      
+      const now = new Date();
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      if (date.toDateString() === now.toDateString()) {
+        return 'Today';
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+      } else {
+        return format(date, 'MMMM d, yyyy'); // "December 3, 2024"
+      }
+    } catch (error) {
+      return format(new Date(), 'MMMM d, yyyy');
+    }
   };
 
   // Go back to groups
@@ -187,56 +266,81 @@ const GroupChatPage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div 
-                key={message.id} 
-                className={`flex ${message.sender.uid === user?.id ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.sender.uid !== user?.id && (
-                  <div className="flex-shrink-0 mr-3">
-                    <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-full w-10 h-10 flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">
-                        {message.sender.name.charAt(0).toUpperCase()}
-                      </span>
+            {/* Group messages by date (optional enhancement) */}
+            {(() => {
+              const groupedMessages: { [date: string]: Message[] } = {};
+              
+              messages.forEach(message => {
+                const dateKey = formatDate(message.timestamp);
+                if (!groupedMessages[dateKey]) {
+                  groupedMessages[dateKey] = [];
+                }
+                groupedMessages[dateKey].push(message);
+              });
+              
+              return Object.entries(groupedMessages).map(([date, dateMessages]) => (
+                <div key={date}>
+                  {/* Date separator */}
+                  <div className="flex items-center justify-center my-4">
+                    <div className="text-xs text-gray-400 bg-gray-800 px-3 py-1 rounded-full">
+                      {date}
                     </div>
                   </div>
-                )}
-                
-                <div className={`max-w-xs lg:max-w-md ${message.sender.uid === user?.id ? 'ml-auto' : ''}`}>
-                  {message.sender.uid !== user?.id && (
-                    <div className="text-xs font-semibold text-gray-300 mb-1">
-                      {message.sender.name}
-                    </div>
-                  )}
-                  <div 
-                    className={`px-4 py-2 rounded-2xl ${
-                      message.sender.uid === user?.id 
-                        ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-br-none' 
-                        : 'bg-gray-700 text-white rounded-bl-none'
-                    }`}
-                  >
-                    <div className="text-sm">{message.text}</div>
+                  
+                  {/* Messages for this date */}
+                  {dateMessages.map((message) => (
                     <div 
-                      className={`text-xs mt-1 ${
-                        message.sender.uid === user?.id ? 'text-purple-100' : 'text-gray-300'
-                      }`}
+                      key={message.id} 
+                      className={`flex ${message.sender.uid === user?.id ? 'justify-end' : 'justify-start'} mb-4`}
                     >
-                      {formatTime(message.timestamp)}
+                      {message.sender.uid !== user?.id && (
+                        <div className="flex-shrink-0 mr-3">
+                          <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-full w-10 h-10 flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">
+                              {message.sender.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className={`max-w-xs lg:max-w-md ${message.sender.uid === user?.id ? 'ml-auto' : ''}`}>
+                        {message.sender.uid !== user?.id && (
+                          <div className="text-xs font-semibold text-gray-300 mb-1">
+                            {message.sender.name}
+                          </div>
+                        )}
+                        <div 
+                          className={`px-4 py-2 rounded-2xl ${
+                            message.sender.uid === user?.id 
+                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-br-none' 
+                              : 'bg-gray-700 text-white rounded-bl-none'
+                          }`}
+                        >
+                          <div className="text-sm">{message.text}</div>
+                          <div 
+                            className={`text-xs mt-1 ${
+                              message.sender.uid === user?.id ? 'text-purple-100' : 'text-gray-300'
+                            }`}
+                          >
+                            {formatTime(message.timestamp)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {message.sender.uid === user?.id && (
+                        <div className="flex-shrink-0 ml-3">
+                          <div className="bg-gradient-to-br from-green-500 to-teal-500 rounded-full w-10 h-10 flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">
+                              {message.sender.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  ))}
                 </div>
-                
-                {message.sender.uid === user?.id && (
-                  <div className="flex-shrink-0 ml-3">
-                    <div className="bg-gradient-to-br from-green-500 to-teal-500 rounded-full w-10 h-10 flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">
-                        {message.sender.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+              ));
+            })()}
             <div ref={messagesEndRef} />
           </div>
         )}
