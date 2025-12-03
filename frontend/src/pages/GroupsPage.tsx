@@ -34,6 +34,7 @@ interface Group {
 
 const GroupsPage: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
+  const [allGroups, setAllGroups] = useState<Group[]>([]); // Store all groups for filtering
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -99,13 +100,81 @@ const GroupsPage: React.FC = () => {
     loadGroups();
   }, [viewMode]);
 
+  useEffect(() => {
+    // Filter groups based on college parameter
+    const urlParams = new URLSearchParams(location.search);
+    const collegeFilter = urlParams.get('college');
+    
+    if (collegeFilter && allGroups.length > 0) {
+      // Handle "others" case - show groups that don't match any college keywords
+      if (collegeFilter === 'others') {
+        const allCollegeKeywords = [
+          'mait', 'maharaja agrasen',
+          'msit', 'maharaja surajmal',
+          'gtbit', 'guru tegh bahadur',
+          'adgips', 'akhilesh das gupta',
+          'nsut', 'netaji subhas',
+          'dtu', 'delhi technological',
+          'iit', 'indian institute of technology',
+          'iiit', 'indraprastha institute',
+          'bpit', 'bhagwan parshuram',
+          'igdtuw', 'indira gandhi delhi',
+          'du', 'university of delhi', 'north campus', 'south campus',
+          'usar', 'university school automation',
+          'usict', 'university school information',
+          'vips', 'vivekananda institute'
+        ];
+        
+        const filtered = allGroups.filter(group => {
+          const groupNameLower = group.groupName.toLowerCase();
+          return !allCollegeKeywords.some(keyword => groupNameLower.includes(keyword));
+        });
+        
+        setGroups(filtered);
+        return;
+      }
+      
+      const collegeKeywords: Record<string, string[]> = {
+        'mait': ['mait', 'maharaja agrasen'],
+        'msit': ['msit', 'maharaja surajmal'],
+        'gtbit': ['gtbit', 'guru tegh bahadur'],
+        'adgips': ['adgips', 'akhilesh das gupta'],
+        'nsut': ['nsut', 'netaji subhas'],
+        'dtu': ['dtu', 'delhi technological'],
+        'iitd': ['iit', 'indian institute of technology'],
+        'iiitd': ['iiit', 'indraprastha institute'],
+        'bpit': ['bpit', 'bhagwan parshuram'],
+        'igdtuw': ['igdtuw', 'indira gandhi delhi'],
+        'du_north': ['du', 'university of delhi', 'north campus'],
+        'du_south': ['du', 'university of delhi', 'south campus'],
+        'usar': ['usar', 'university school automation'],
+        'usict': ['usict', 'university school information'],
+        'vips': ['vips', 'vivekananda institute']
+      };
+      
+      const keywords = collegeKeywords[collegeFilter] || [];
+      const filtered = allGroups.filter(group => {
+        const groupNameLower = group.groupName.toLowerCase();
+        return keywords.some(keyword => groupNameLower.includes(keyword));
+      });
+      
+      setGroups(filtered);
+    } else if (allGroups.length > 0) {
+      // If no college filter, show all groups based on view mode
+      setGroups(allGroups);
+    }
+  }, [location.search, allGroups]);
+
   const loadGroups = async () => {
     try {
       setLoading(true);
+      
       const response = viewMode === 'all' 
         ? await groupAPI.getAll() 
         : await groupAPI.getMyGroups();
-      setGroups(response.data.data);
+      
+      setAllGroups(response.data.data); // Store all groups
+      setGroups(response.data.data); // Initially show all groups
       setError(null);
     } catch (err: any) {
       console.error('Error loading groups:', err);
@@ -222,6 +291,30 @@ const GroupsPage: React.FC = () => {
     navigate(`/group/${groupId}`);
   };
 
+  // Check if there's a college filter in the URL
+  const urlParams = new URLSearchParams(location.search);
+  const collegeFilter = urlParams.get('college');
+  
+  // College names mapping
+  const collegeNames: Record<string, string> = {
+    'dtu': 'Delhi Technological University (DTU)',
+    'nsut': 'Netaji Subhas University of Technology (NSUT)',
+    'igdtuw': 'Indira Gandhi Delhi Technical University for Women (IGDTUW)',
+    'iitd': 'Indian Institute of Technology Delhi (IITD)',
+    'iiitd': 'Indraprastha Institute of Information Technology Delhi (IIITD)',
+    'mait': 'Maharaja Agrasen Institute of Technology (MAIT)',
+    'msit': 'Maharaja Surajmal Institute of Technology (MSIT)',
+    'gtbit': 'Guru Tegh Bahadur Institute of Technology (GTBIT)',
+    'usict': 'University School of Information, Communication & Technology (USICT)',
+    'usar': 'University School of Automation & Robotics (USAR)',
+    'du_north': 'University of Delhi (North Campus)',
+    'du_south': 'University of Delhi (South Campus)',
+    'bpit': 'Bhagwan Parshuram Institute of Technology (BPIT)',
+    'adgips': 'Akhilesh Das Gupta Institute of Technology & Management (ADGIPS)',
+    'vips': 'Vivekananda Institute of Professional Studies (VIPS)',
+    'others': 'Other Colleges'
+  };
+
   if (loading && groups.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 flex items-center justify-center">
@@ -237,8 +330,35 @@ const GroupsPage: React.FC = () => {
         <div className="mb-8 animate-fadeIn">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Student Groups</h1>
-              <p className="mt-2 text-gray-700">{viewMode === 'all' ? 'Connect with fellow students traveling on similar routes' : 'Your groups'}</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {collegeFilter ? collegeNames[collegeFilter] || 'College Groups' : 'Student Groups'}
+              </h1>
+              <p className="mt-2 text-gray-700">
+                {collegeFilter 
+                  ? collegeFilter === 'others' 
+                    ? 'Groups from other colleges and institutions' 
+                    : `Groups matching "${collegeNames[collegeFilter] || collegeFilter}" keywords`
+                  : viewMode === 'all' 
+                    ? 'Connect with fellow students traveling on similar routes' 
+                    : 'Your groups'
+                }
+              </p>
+              {collegeFilter && (
+                <div className="mt-2 flex items-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                    <svg className="mr-1.5 h-4 w-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    {collegeFilter === 'others' ? 'Other Colleges' : 'College Specific'}
+                  </span>
+                  <button 
+                    onClick={() => navigate('/groups')}
+                    className="ml-3 text-sm text-purple-600 hover:text-purple-800 font-medium"
+                  >
+                    View All Groups
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <button
@@ -335,7 +455,7 @@ const GroupsPage: React.FC = () => {
                     Pickup Location *
                   </label>
                   <MapInput
-                    onLocationSelect={(location) => {
+                    onLocationSelect={(location: { address: string; coordinates: [number, number] }) => {
                       setPickupAddress(location.address);
                       setPickupCoordinates(location.coordinates);
                     }}
@@ -348,7 +468,7 @@ const GroupsPage: React.FC = () => {
                     Drop Location *
                   </label>
                   <MapInput
-                    onLocationSelect={(location) => {
+                    onLocationSelect={(location: { address: string; coordinates: [number, number] }) => {
                       setDropAddress(location.address);
                       setDropCoordinates(location.coordinates);
                     }}
@@ -438,7 +558,14 @@ const GroupsPage: React.FC = () => {
 
         {/* Groups List */}
         <div className="ridepool-card p-6 animate-fadeIn">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">{viewMode === 'all' ? 'Available Groups' : 'My Groups'}</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">
+            {collegeFilter 
+              ? `${collegeNames[collegeFilter] || 'College'} Groups` 
+              : viewMode === 'all' 
+                ? 'Available Groups' 
+                : 'My Groups'
+            }
+          </h2>
           
           {loading ? (
             <div className="flex justify-center py-12">
@@ -451,8 +578,20 @@ const GroupsPage: React.FC = () => {
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-700">No groups found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Be the first to create a group!
+                {collegeFilter 
+                  ? collegeFilter === 'others'
+                    ? 'No groups found from other colleges'
+                    : `No groups found matching "${collegeNames[collegeFilter] || collegeFilter}" keywords` 
+                  : 'Be the first to create a group!'}
               </p>
+              <div className="mt-6">
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="ridepool-btn ridepool-btn-primary"
+                >
+                  Create Your First Group
+                </button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -52,6 +52,7 @@ const UserSchema: Schema = new Schema({
   phone: {
     type: String,
     required: true,
+    unique: true,
     default: 'N/A'
   },
   gender: {
