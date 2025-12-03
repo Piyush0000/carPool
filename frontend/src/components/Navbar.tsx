@@ -11,6 +11,26 @@ const Navbar: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showCollegeDropdown, setShowCollegeDropdown] = useState(false);
+
+  // College names mapping
+  const colleges = [
+    { id: 'mait', name: 'MAIT' },
+    { id: 'msit', name: 'MSIT' },
+    { id: 'gtbit', name: 'GTBIT' },
+    { id: 'adgips', name: 'ADGIPS' },
+    { id: 'nsut', name: 'NSUT' },
+    { id: 'dtu', name: 'DTU' },
+    { id: 'iitd', name: 'IIT Delhi' },
+    { id: 'iiitd', name: 'IIIT Delhi' },
+    { id: 'bpit', name: 'BPIT' },
+    { id: 'igdtuw', name: 'IGDTUW' },
+    { id: 'du_north', name: 'DU North Campus' },
+    { id: 'du_south', name: 'DU South Campus' },
+    { id: 'usar', name: 'USAR' },
+    { id: 'usict', name: 'USICT' },
+    { id: 'vips', name: 'VIPS' }
+  ];
 
   // Fetch unread notification count and set up socket connection
   useEffect(() => {
@@ -67,6 +87,19 @@ const Navbar: React.FC = () => {
     setShowNotifications(!showNotifications);
   };
 
+  const handleCollegeSelect = (collegeId: string) => {
+    navigate(`/groups?college=${collegeId}`);
+    setShowCollegeDropdown(false);
+    setIsMenuOpen(false);
+  };
+
+  // Handle "Other Colleges" selection
+  const handleOtherColleges = () => {
+    navigate('/groups?college=others');
+    setShowCollegeDropdown(false);
+    setIsMenuOpen(false);
+  };
+
   return (
     <nav className="bg-white bg-opacity-80 backdrop-blur-md text-gray-900 shadow-lg border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -91,6 +124,46 @@ const Navbar: React.FC = () => {
                 <Link to="/groups" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
                   Groups
                 </Link>
+                
+                {/* College Dropdown */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowCollegeDropdown(!showCollegeDropdown)}
+                    className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Colleges
+                    <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {showCollegeDropdown && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="py-1">
+                        {colleges.map((college) => (
+                          <button
+                            key={college.id}
+                            onClick={() => handleCollegeSelect(college.id)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                          >
+                            {college.name}
+                          </button>
+                        ))}
+                        <div className="border-t border-gray-200 my-1"></div>
+                        <button
+                          onClick={handleOtherColleges}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-medium"
+                        >
+                          Other Colleges
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <Link to="/profile" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
                   Profile
                 </Link>
@@ -217,6 +290,41 @@ const Navbar: React.FC = () => {
                 <Link to="/groups" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
                   Groups
                 </Link>
+                
+                {/* Mobile College Dropdown */}
+                <div className="px-3 py-2">
+                  <button 
+                    onClick={() => setShowCollegeDropdown(!showCollegeDropdown)}
+                    className="w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-between"
+                  >
+                    <span>Colleges</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {showCollegeDropdown && (
+                    <div className="mt-2 ml-4 space-y-1">
+                      {colleges.map((college) => (
+                        <button
+                          key={college.id}
+                          onClick={() => handleCollegeSelect(college.id)}
+                          className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded"
+                        >
+                          {college.name}
+                        </button>
+                      ))}
+                      <div className="border-t border-gray-200 my-1"></div>
+                      <button
+                        onClick={handleOtherColleges}
+                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded font-medium"
+                      >
+                        Other Colleges
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
                 <Link to="/profile" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
                   Profile
                 </Link>

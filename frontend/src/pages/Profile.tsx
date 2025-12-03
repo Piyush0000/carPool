@@ -213,13 +213,9 @@ const Profile: React.FC = () => {
                           value={profile.year}
                           onChange={handleChange}
                           className="ridepool-input mt-1 block w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
-                          placeholder="e.g., 1st Year, 2nd Year"
                         />
                       ) : (
-                        <p className="mt-1 text-sm text-gray-900">{profile.year || 'Not specified'}</p>
-                      )}
-                      {editing && (
-                        <p className="mt-1 text-xs text-gray-500">This helps others identify your academic level when forming groups</p>
+                        <p className="mt-1 text-sm text-gray-900">{profile.year}</p>
                       )}
                     </div>
                     
@@ -235,13 +231,9 @@ const Profile: React.FC = () => {
                           value={profile.branch}
                           onChange={handleChange}
                           className="ridepool-input mt-1 block w-full rounded-md py-2 px-3 focus:z-10 sm:text-sm"
-                          placeholder="e.g., Computer Science, Mechanical Engineering"
                         />
                       ) : (
-                        <p className="mt-1 text-sm text-gray-900">{profile.branch || 'Not specified'}</p>
-                      )}
-                      {editing && (
-                        <p className="mt-1 text-xs text-gray-500">This helps others identify your department when forming groups</p>
+                        <p className="mt-1 text-sm text-gray-900">{profile.branch}</p>
                       )}
                     </div>
                     
