@@ -197,7 +197,7 @@ export const leaveGroup = async (req: any, res: Response): Promise<void> => {
 export const lockGroup = async (req: any, res: Response): Promise<void> => {
   try {
     const group = await Group.findById(req.params.groupId);
-    
+
     if (!group) {
       res.status(404).json({
         success: false,
@@ -205,20 +205,35 @@ export const lockGroup = async (req: any, res: Response): Promise<void> => {
       });
       return;
     }
-    
-    // Check if user is admin of the group
-    const isAdmin = group.members.some(member => 
-      member.user._id.toString() === req.user._id.toString() && member.role === 'admin'
+
+    // Check if user is admin
+    const isAdmin = group.members.some(
+      (member) =>
+        member.user._id.toString() === req.user._id.toString() &&
+        member.role === "admin"
     );
-    
+
     if (!isAdmin) {
       res.status(403).json({
         success: false,
-        message: 'Only group admin can lock the group'
+        message: "Only group admin can lock the group",
       });
       return;
-       success: false,
-      message: err.message || 'Server Error'
+    }
+
+    // Lock the group
+    group.status = "Locked";
+    await group.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Group locked successfully",
+      data: group,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message || "Server Error",
     });
   }
 };
@@ -253,8 +268,19 @@ export const getAllGroups = async (req: any, res: Response): Promise<void> => {
       success: true,
       count: groupsWithAccess.length,
       data: groupsWithAccess
-oupsWithAccess
-d> => {
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Server Error'
+    });
+  }
+};
+
+// @desc    Get open groups
+// @route   GET /api/group/open
+// @access  Public
+export const getOpenGroups = async (req: any, res: Response): Promise<void> => {
   try {
     const groups = await Group.find({
       status: 'Open'
