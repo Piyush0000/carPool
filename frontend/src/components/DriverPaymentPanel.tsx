@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Ride, RideRider } from '../services/ride.service';
+import type { Ride } from '../services/ride.service';
 import RideService from '../services/ride.service';
 
 interface DriverPaymentPanelProps {
@@ -9,20 +9,16 @@ interface DriverPaymentPanelProps {
 
 const DriverPaymentPanel: React.FC<DriverPaymentPanelProps> = ({ ride, onRideUpdate }) => {
   const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
-  const [uploadingQR, setUploadingQR] = useState(false);
 
   const handleUploadQRCode = async () => {
     if (!qrCodeFile) return;
     
     try {
-      setUploadingQR(true);
       await RideService.uploadRideQRCode(ride._id, qrCodeFile);
-      setUploadingQR(false);
       setQrCodeFile(null);
       onRideUpdate();
     } catch (error) {
       alert('Failed to upload QR code');
-      setUploadingQR(false);
     }
   };
 
