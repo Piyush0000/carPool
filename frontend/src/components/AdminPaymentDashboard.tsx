@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Ride, RideRider } from '../services/ride.service';
 import RideService from '../services/ride.service';
 
@@ -132,7 +132,7 @@ const AdminPaymentDashboard: React.FC<AdminPaymentDashboardProps> = ({ rides, on
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {pendingVerificationRiders.map(({ ride, rider }, index) => (
+                  {pendingVerificationRiders.map(({ ride, rider }) => (
                     <tr key={`${ride._id}-${rider.user._id}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
