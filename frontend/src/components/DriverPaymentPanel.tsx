@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Ride, RideRider } from '../services/ride.service';
+import type { Ride } from '../services/ride.service';
 import RideService from '../services/ride.service';
 
 interface DriverPaymentPanelProps {
