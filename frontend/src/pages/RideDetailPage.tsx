@@ -96,6 +96,7 @@ const RideDetailPage: React.FC = () => {
   };
 
   const handleSendPaymentReminder = async (riderId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     try {
       // In a real implementation, this would send a notification to the rider
       alert(`Payment reminder sent to rider`);
