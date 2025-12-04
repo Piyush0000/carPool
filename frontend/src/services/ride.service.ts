@@ -213,8 +213,7 @@ class RideService {
    * @param upiId - The UPI ID
    * @returns Promise with updated ride
    */
-  static async updateDriverUpiId(rideId: string, upiId: string): Promise<Ride> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static async updateDriverUpiId(_rideId: string, _upiId: string): Promise<Ride> {
     throw new Error('UPI ID functionality has been removed. Please use QR code only.');
   }
 
