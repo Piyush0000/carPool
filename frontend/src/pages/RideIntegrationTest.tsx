@@ -15,7 +15,7 @@ const RideIntegrationTest: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedRideForPayment, setSelectedRideForPayment] = useState<any>(null);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
     loadData();

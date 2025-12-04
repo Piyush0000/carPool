@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import RideService from '../services/ride.service';
-import type { Ride, RideRider } from '../services/ride.service';
+import type { Ride } from '../services/ride.service';
 import DriverPaymentPanel from '../components/DriverPaymentPanel';
 import RiderPaymentPanel from '../components/RiderPaymentPanel';
 import EditRideModal from '../components/EditRideModal';
