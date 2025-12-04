@@ -1,73 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { statsAPI } from '../services/api.service';
+import axios from 'axios';
 
 const HomeDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [stats, setStats] = useState({
-    totalGroups: 9,
-    activeUsers: 22
+    totalGroups: 0,
+    userGroups: 0
   });
+  const [recentGroups, setRecentGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [recentGroups] = useState([
-    {
-      _id: '1',
-      groupName: 'Delhi to Jodhpur',
-      route: {
-        pickup: { address: 'Maharaja Agrasen Institute of Technology' },
-        drop: { address: 'Jodhpur' }
-      },
-      memberCount: 4,
-      maxMembers: 4
-    },
-    {
-      _id: '2',
-      groupName: 'Exam journey to VIPS',
-      route: {
-        pickup: { address: 'Uttam Nagar West' },
-        drop: { address: 'Vivekananda Institute of Professional Studies - Technical Campus' }
-      },
-      memberCount: 3,
-      maxMembers: 4
-    },
-    {
-      _id: '3',
-      groupName: 'MAIT TO HMR',
-      route: {
-        pickup: { address: 'MAIT' },
-        drop: { address: 'Hamidpur - 110036' }
-      },
-      memberCount: 4,
-      maxMembers: 4
-    }
-  ]);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await statsAPI.getPublicStats();
-        if (response.data.success) {
-          setStats({
-            totalGroups: response.data.data.totalGroups,
-            activeUsers: response.data.data.totalUsers
-          });
-        }
-      } catch (error) {
-        console.error('Failed to fetch stats:', error);
-        // Fallback to default values
-        setStats({
-          totalGroups: 1247,
-          activeUsers: 3117
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchDashboardData();
+  }, [isAuthenticated]);
 
-    fetchStats();
-  }, []);
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      if (isAuthenticated) {
+        // Fetch all groups and user groups for authenticated users
+        const [allGroupsResponse, userGroupsResponse] = await Promise.all([
+          axios.get('/api/group'),
+          axios.get('/api/group/mygroups')
+        ]);
+        
+        setStats({
+          totalGroups: allGroupsResponse.data.data.length,
+          userGroups: userGroupsResponse.data.data.length
+        });
+        
+        // Set recent groups
+        setRecentGroups(userGroupsResponse.data.data.slice(0, 3));
+      } else {
+        // Fetch only public groups for non-authenticated users
+        const publicGroupsResponse = await axios.get('/api/group/public');
+        
+        setStats({
+          totalGroups: publicGroupsResponse.data.data.length,
+          userGroups: 0
+        });
+        
+        // For non-authenticated users, show recent public groups
+        const publicGroups = publicGroupsResponse.data.data.slice(0, 3);
+        setRecentGroups(publicGroups);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateGroup = () => {
+    navigate('/groups');
+  };
+
+  const handleJoinGroup = () => {
+    navigate('/find-pool');
+  };
 
   // Component-specific styles
   const styles = {
@@ -94,566 +88,6 @@ const HomeDashboard: React.FC = () => {
           animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
         }}></div>
       </div>
-    );
-  }
-
-  // For authenticated users, show a simplified dashboard
-  if (isAuthenticated) {
-    return (
-      <>
-        {/* Component-specific CSS */}
-        <style>{`
-          .ridepool-dashboard-card {
-            background: ${styles.lightBg};
-            border: 1px solid ${styles.border};
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: hidden;
-          }
-          
-          .ridepool-dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -6px rgba(0, 0, 0, 0.2);
-            border-color: ${styles.primary};
-          }
-          
-          .ridepool-dashboard-btn {
-            position: relative;
-            overflow: hidden;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border: none;
-            cursor: pointer;
-            padding: 12px 24px;
-            font-size: 1rem;
-            text-decoration: none;
-          }
-          
-          .ridepool-dashboard-btn-primary {
-            background: linear-gradient(135deg, ${styles.primary}, ${styles.secondary});
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-          }
-          
-          .ridepool-dashboard-btn-primary:hover {
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
-            transform: translateY(-3px);
-          }
-          
-          .ridepool-dashboard-btn-secondary {
-            background: linear-gradient(135deg, ${styles.accent}, ${styles.purple});
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 209, 102, 0.4);
-          }
-          
-          .ridepool-dashboard-btn-secondary:hover {
-            box-shadow: 0 6px 20px rgba(255, 209, 102, 0.6);
-            transform: translateY(-3px);
-          }
-          
-          .ridepool-dashboard-btn-tertiary {
-            background: linear-gradient(135deg, ${styles.info}, ${styles.primary});
-            color: white;
-            box-shadow: 0 4px 15px rgba(17, 138, 178, 0.4);
-          }
-          
-          .ridepool-dashboard-btn-tertiary:hover {
-            box-shadow: 0 6px 20px rgba(17, 138, 178, 0.6);
-            transform: translateY(-3px);
-          }
-          
-          .ridepool-dashboard-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-          }
-          
-          .ridepool-dashboard-badge-primary {
-            background: linear-gradient(135deg, ${styles.primary}, ${styles.secondary});
-            color: white;
-            box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
-          }
-          
-          .ridepool-dashboard-badge-success {
-            background: linear-gradient(135deg, ${styles.success}, ${styles.secondary});
-            color: white;
-            box-shadow: 0 2px 4px rgba(6, 214, 160, 0.3);
-          }
-          
-          .ridepool-dashboard-badge-warning {
-            background: linear-gradient(135deg, ${styles.warning}, ${styles.accent});
-            color: white;
-            box-shadow: 0 2px 4px rgba(255, 159, 28, 0.3);
-          }
-          
-          @media (max-width: 768px) {
-            .ridepool-dashboard-card {
-              border-radius: 12px;
-            }
-            
-            .ridepool-dashboard-btn {
-              border-radius: 10px;
-              padding: 10px 20px;
-              font-size: 0.9rem;
-            }
-          }
-          
-          /* Brand logo styles */
-          .brand-logo {
-            background: linear-gradient(135deg, ${styles.primary}, ${styles.secondary});
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 800;
-            letter-spacing: -0.05em;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-          
-          /* Feature card styles */
-          .feature-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            padding: 2rem;
-            border: 1px solid #e5e7eb;
-          }
-          
-          .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -6px rgba(0, 0, 0, 0.1);
-          }
-          
-          .feature-icon {
-            font-size: 2.5rem;
-            width: 4rem;
-            height: 4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 1rem;
-            margin-bottom: 1.5rem;
-          }
-          
-          /* Animations */
-          @keyframes pulse-glow {
-            0%, 100% {
-              box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
-            }
-            50% {
-              box-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
-            }
-          }
-          
-          .animate-pulse-glow {
-            animation: pulse-glow 2s infinite;
-          }
-          
-          @keyframes slideInLeft {
-            from {
-              opacity: 0;
-              transform: translateX(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-          
-          .animate-slideInLeft {
-            animation: slideInLeft 0.6s ease-out forwards;
-          }
-          
-          @keyframes slideInRight {
-            from {
-              opacity: 0;
-              transform: translateX(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-          
-          .animate-slideInRight {
-            animation: slideInRight 0.6s ease-out forwards;
-          }
-          
-          @keyframes fade-in {
-            from {
-              opacity: 0;
-              transform: translateY(10px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          
-          .animate-fade-in {
-            animation: fade-in 0.6s ease-out forwards;
-          }
-          
-          @keyframes float {
-            0% {
-              transform: translateY(0px);
-            }
-            50% {
-              transform: translateY(-10px);
-            }
-            100% {
-              transform: translateY(0px);
-            }
-          }
-          
-          .animate-float {
-            animation: float 3s ease-in-out infinite;
-          }
-          
-          @keyframes pulse-slow {
-            0%, 100% {
-              transform: scale(1);
-            }
-            50% {
-              transform: scale(1.02);
-            }
-          }
-          
-          .animate-pulse-slow {
-            animation: pulse-slow 3s ease-in-out infinite;
-          }
-          
-          /* Enhanced card styles */
-          .enhanced-card {
-            background: linear-gradient(145deg, ${styles.lightBg}, ${styles.lightBg2});
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            overflow: hidden;
-          }
-          
-          .enhanced-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-          }
-          
-          /* Gradient text */
-          .gradient-text {
-            background: linear-gradient(135deg, ${styles.primary}, ${styles.secondary});
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-          }
-          
-          /* Section spacing */
-          .section-spacing {
-            padding: 4rem 0;
-          }
-          
-          /* Responsive adjustments */
-          @media (max-width: 1024px) {
-            .section-spacing {
-              padding: 3rem 0;
-            }
-          }
-          
-          @media (max-width: 768px) {
-            .section-spacing {
-              padding: 2rem 0;
-            }
-          }
-        `}</style>
-
-        <div className="min-h-screen bg-white relative">
-          {/* Dashboard Content for Authenticated Users */}
-          <div className="py-10 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-              {/* Header */}
-              <div className="mb-16 text-center animate-fade-in">
-                <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-6 animate-float">
-                  Welcome Back!
-                </h1>
-                <p className="mt-4 text-xl md:text-2xl max-w-3xl mx-auto" style={{ color: styles.textMedium }}>
-                  Continue your journey with RideBuddy
-                </p>
-              </div>
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 mb-16 animate-fade-in">
-                <div className="enhanced-card p-8 hover:shadow-2xl">
-                  <div className="flex items-center">
-                    <div className="p-4 rounded-xl" style={{ background: `rgba(255, 107, 107, 0.2)` }}>
-                      <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.primary }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                    </div>
-                    <div className="ml-6">
-                      <h3 className="text-lg font-medium" style={{ color: styles.textLight }}>
-                        Your Groups
-                      </h3>
-                      <p className="text-4xl font-bold mt-1 gradient-text">
-                        3
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="enhanced-card p-8 hover:shadow-2xl">
-                  <div className="flex items-center">
-                    <div className="p-4 rounded-xl" style={{ background: `rgba(78, 205, 196, 0.2)` }}>
-                      <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.secondary }}>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div className="ml-6">
-                      <h3 className="text-lg font-medium" style={{ color: styles.textLight }}>
-                        Upcoming Rides
-                      </h3>
-                      <p className="text-4xl font-bold mt-1 gradient-text">
-                        2
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="enhanced-card p-8 animate-fade-in mb-16">
-                <h2 className="text-2xl md:text-3xl font-bold mb-10 gradient-text">
-                  Quick Actions
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <Link 
-                    to="/find-pool"
-                    className="ridepool-dashboard-btn ridepool-dashboard-btn-primary py-10 px-6 rounded-2xl flex flex-col items-center justify-center hover:scale-105 transition-all duration-300 transform hover:-translate-y-2 shadow-lg hover:shadow-2xl"
-                  >
-                    <svg className="h-14 w-14 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <span className="text-xl font-bold">Find Pool</span>
-                    <span className="text-base opacity-90 mt-2">Look for ride groups</span>
-                  </Link>
-                  
-                  <Link 
-                    to="/groups"
-                    className="ridepool-dashboard-btn ridepool-dashboard-btn-secondary py-10 px-6 rounded-2xl flex flex-col items-center justify-center hover:scale-105 transition-all duration-300 transform hover:-translate-y-2 shadow-lg hover:shadow-2xl"
-                  >
-                    <svg className="h-14 w-14 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span className="text-xl font-bold">My Groups</span>
-                    <span className="text-base opacity-90 mt-2">View your groups</span>
-                  </Link>
-                  
-                  <Link 
-                    to="/profile"
-                    className="ridepool-dashboard-btn ridepool-dashboard-btn-tertiary py-10 px-6 rounded-2xl flex flex-col items-center justify-center hover:scale-105 transition-all duration-300 transform hover:-translate-y-2 shadow-lg hover:shadow-2xl"
-                  >
-                    <svg className="h-14 w-14 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span className="text-xl font-bold">Profile</span>
-                    <span className="text-base opacity-90 mt-2">Manage your account</span>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Recent Activity */}
-              <div className="enhanced-card p-8 animate-fade-in">
-                <div className="flex items-center justify-between mb-10">
-                  <h2 className="text-2xl md:text-3xl font-bold gradient-text">
-                    Recent Activity
-                  </h2>
-                  <Link 
-                    to="/groups"
-                    className="text-lg font-medium transition-colors hover:opacity-80 px-6 py-3 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 hover:from-purple-200 hover:to-pink-200 transition-all duration-300"
-                    style={{ color: styles.primary }}
-                  >
-                    View All
-                  </Link>
-                </div>
-                
-                <div className="space-y-6">
-                  <div 
-                    className="flex items-center p-6 rounded-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-md hover:shadow-lg"
-                    style={{ 
-                      background: styles.lightBg2,
-                      border: `1px solid ${styles.border}`
-                    }}
-                    onClick={() => navigate('/group/1')}
-                  >
-                    <div 
-                      className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background: `linear-gradient(135deg, ${styles.primary}, ${styles.secondary})`
-                      }}
-                    >
-                      <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                    </div>
-                    <div className="ml-6 flex-1">
-                      <h3 className="text-xl font-bold" style={{ color: styles.textDark }}>
-                        Delhi to Jodhpur
-                      </h3>
-                      <p className="text-base mt-1" style={{ color: styles.textLight }}>
-                        Today at 9:00 AM
-                      </p>
-                    </div>
-                    <div className="flex items-center">
-                      <span 
-                        className="ridepool-dashboard-badge ridepool-dashboard-badge-success"
-                      >
-                        Confirmed
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    className="flex items-center p-6 rounded-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer shadow-md hover:shadow-lg"
-                    style={{ 
-                      background: styles.lightBg2,
-                      border: `1px solid ${styles.border}`
-                    }}
-                    onClick={() => navigate('/group/2')}
-                  >
-                    <div 
-                      className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background: `linear-gradient(135deg, ${styles.primary}, ${styles.secondary})`
-                      }}
-                    >
-                      <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                    </div>
-                    <div className="ml-6 flex-1">
-                      <h3 className="text-xl font-bold" style={{ color: styles.textDark }}>
-                        Exam journey to VIPS
-                      </h3>
-                      <p className="text-base mt-1" style={{ color: styles.textLight }}>
-                        Tomorrow at 2:30 PM
-                      </p>
-                    </div>
-                    <div className="flex items-center">
-                      <span 
-                        className="ridepool-dashboard-badge ridepool-dashboard-badge-warning"
-                      >
-                        Pending
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Professional Footer */}
-          <footer className="bg-gray-900 text-white pt-16 pb-8 mt-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-                {/* Company Info */}
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-bold" style={{ color: styles.primary }}>
-                    RideBuddy
-                  </h3>
-                  <p className="text-gray-400">
-                    Connecting students through shared rides, reducing costs and environmental impact on campus.
-                  </p>
-                  <div className="flex space-x-4">
-                    <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                      </svg>
-                    </a>
-                    <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                      </svg>
-                    </a>
-                    <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-                
-                {/* Quick Links */}
-                <div>
-                  <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-                  <ul className="space-y-2">
-                    <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
-                    <li><Link to="/find-pool" className="text-gray-400 hover:text-white transition-colors">Find Pool</Link></li>
-                  </ul>
-                </div>
-                
-                {/* Resources */}
-                <div>
-                  <h4 className="text-lg font-semibold mb-4">Resources</h4>
-                  <ul className="space-y-2">
-                    <li><Link to="/groups" className="text-gray-400 hover:text-white transition-colors">Groups</Link></li>
-                    <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link></li>
-                  </ul>
-                </div>
-                
-                {/* Contact Info */}
-                <div>
-                  <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-                  <ul className="space-y-2 text-gray-400">
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <span>ridebuddyservices@gmail.com</span>
-                    </li>
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      <span>+91 9717704058</span>
-                    </li>
-                    <li className="flex items-start">
-                      <svg className="h-5 w-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <span>Delhi, India</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              
-              <div className="border-t border-gray-800 pt-8 mt-8">
-                <div className="flex flex-col md:flex-row justify-between items-center">
-                  <p className="text-gray-400 text-sm">
-                    © {new Date().getFullYear()} RideBuddy. All rights reserved.
-                  </p>
-                  <div className="mt-4 md:mt-0 flex space-x-6">
-                    <Link to="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">
-                      Privacy Policy
-                    </Link>
-                    <Link to="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
-                      Terms of Service
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </footer>
-        </div>
-      </>
     );
   }
 
@@ -770,7 +204,7 @@ const HomeDashboard: React.FC = () => {
         
         /* Brand logo styles */
         .brand-logo {
-          background: linear-gradient(135deg, ${styles.primary}, ${styles.secondary});
+          background: linear-gradient(135deg, #FF6B6B, #4ECDC4);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -895,7 +329,7 @@ const HomeDashboard: React.FC = () => {
         
         /* Enhanced card styles */
         .enhanced-card {
-          background: linear-gradient(145deg, ${styles.lightBg}, ${styles.lightBg2});
+          background: linear-gradient(145deg, #ffffff, #f0f0f0);
           border-radius: 20px;
           box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
           transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1007,7 +441,7 @@ const HomeDashboard: React.FC = () => {
                       Active Users
                     </h3>
                     <p className="text-4xl font-bold mt-1 gradient-text">
-                      {stats.activeUsers}
+                      {Math.floor(stats.totalGroups * 2.5)}
                     </p>
                   </div>
                 </div>
@@ -1112,7 +546,13 @@ const HomeDashboard: React.FC = () => {
                             background: styles.lightBg2,
                             border: `1px solid ${styles.border}`
                           }}
-                          onClick={() => navigate('/login')}
+                          onClick={() => {
+                            if (isAuthenticated) {
+                              navigate(`/group/${group._id}`);
+                            } else {
+                              navigate('/groups');
+                            }
+                          }}
                         >
                           <div 
                             className="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center"
@@ -1133,18 +573,32 @@ const HomeDashboard: React.FC = () => {
                             </p>
                           </div>
                           <div className="flex items-center">
-                            <span 
-                              className="ridepool-dashboard-badge ridepool-dashboard-badge-primary"
-                            >
-                              {group.memberCount}/{group.maxMembers}
+                            <span className="ridepool-dashboard-badge ridepool-dashboard-badge-primary text-lg px-4 py-2 font-bold">
+                              {group.members?.length || 0}/{group.seatCount || 0}
                             </span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <p style={{ color: styles.textMedium }}>No recent activity to display</p>
+                    <div className="text-center py-16">
+                      <svg className="mx-auto h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.textLight }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      <h3 className="mt-6 text-2xl font-bold" style={{ color: styles.textDark }}>
+                        No groups available
+                      </h3>
+                      <p className="mt-3 text-lg" style={{ color: styles.textLight }}>
+                        Check back later for new groups.
+                      </p>
+                      <div className="mt-10">
+                        <Link
+                          to="/register"
+                          className="ridepool-dashboard-btn ridepool-dashboard-btn-primary px-10 py-4 rounded-2xl text-lg font-bold hover:scale-105 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-2xl"
+                        >
+                          Sign Up to Create Group
+                        </Link>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1155,224 +609,179 @@ const HomeDashboard: React.FC = () => {
                 {/* Upcoming Rides */}
                 <div className="enhanced-card p-8 animate-fade-in">
                   <h2 className="text-2xl md:text-3xl font-bold mb-10 gradient-text">
-                    Why Choose RideBuddy?
+                    Upcoming Rides
                   </h2>
-                  
-                  <div className="space-y-8">
-                    <div className="feature-card">
-                      <div className="feature-icon bg-blue-100 text-blue-600">
-                        👥
+                  <div className="space-y-6">
+                    <div className="p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300" style={{ 
+                      background: styles.lightBg2,
+                      border: `1px solid ${styles.border}`
+                    }}>
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-xl font-bold" style={{ color: styles.textDark }}>
+                          Morning Ride
+                        </h3>
+                        <span className="ridepool-dashboard-badge ridepool-dashboard-badge-success text-lg px-4 py-2 font-bold">
+                          Tomorrow
+                        </span>
                       </div>
-                      <h3 className="text-xl font-bold mb-3" style={{ color: styles.textDark }}>
-                        Find Travel Buddies
-                      </h3>
-                      <p style={{ color: styles.textMedium }}>
-                        Match with students traveling on similar routes and schedules in real-time.
+                      <p className="text-base mt-3" style={{ color: styles.textLight }}>
+                        8:00 AM • Main Gate → Academic Block
                       </p>
+                      <div className="flex items-center mt-5">
+                        <div className="flex -space-x-3">
+                          <div 
+                            className="w-10 h-10 rounded-full border-2 border-white"
+                            style={{
+                              background: `linear-gradient(135deg, ${styles.primary}, ${styles.secondary})`
+                            }}
+                          ></div>
+                          <div 
+                            className="w-10 h-10 rounded-full border-2 border-white"
+                            style={{
+                              background: `linear-gradient(135deg, ${styles.secondary}, ${styles.success})`
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-base ml-4 font-medium" style={{ color: styles.textLight }}>
+                          2 members
+                        </span>
+                      </div>
                     </div>
                     
-                    <div className="feature-card">
-                      <div className="feature-icon bg-green-100 text-green-600">
-                        💰
+                    <div className="p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300" style={{ 
+                      background: styles.lightBg2,
+                      border: `1px solid ${styles.border}`
+                    }}>
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-xl font-bold" style={{ color: styles.textDark }}>
+                          Evening Ride
+                        </h3>
+                        <span className="ridepool-dashboard-badge ridepool-dashboard-badge-warning text-lg px-4 py-2 font-bold">
+                          Fri, 5:30 PM
+                        </span>
                       </div>
-                      <h3 className="text-xl font-bold mb-3" style={{ color: styles.textDark }}>
-                        Save Money
-                      </h3>
-                      <p style={{ color: styles.textMedium }}>
-                        Split cab fares with fellow students and reduce your travel costs significantly.
+                      <p className="text-base mt-3" style={{ color: styles.textLight }}>
+                        5:30 PM • Academic Block → Main Gate
                       </p>
-                    </div>
-                    
-                    <div className="feature-card">
-                      <div className="feature-icon bg-purple-100 text-purple-600">
-                        🌍
-                      </div>
-                      <h3 className="text-xl font-bold mb-3" style={{ color: styles.textDark }}>
-                        Go Green
-                      </h3>
-                      <p style={{ color: styles.textMedium }}>
-                        Reduce carbon emissions by up to 75% and help create a cleaner campus.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Section */}
-                <div className="enhanced-card p-8 animate-fade-in">
-                  <h2 className="text-2xl md:text-3xl font-bold mb-6 gradient-text">
-                    Get in Touch
-                  </h2>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 mt-1">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.textLight }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <p style={{ color: styles.textMedium }}>Email</p>
-                        <p className="font-medium" style={{ color: styles.textDark }}>ridebuddyservices@gmail.com</p>
+                      <div className="flex items-center mt-5">
+                        <div className="flex -space-x-3">
+                          <div 
+                            className="w-10 h-10 rounded-full border-2 border-white"
+                            style={{
+                              background: `linear-gradient(135deg, ${styles.primary}, ${styles.secondary})`
+                            }}
+                          ></div>
+                          <div 
+                            className="w-10 h-10 rounded-full border-2 border-white"
+                            style={{
+                              background: `linear-gradient(135deg, ${styles.secondary}, ${styles.success})`
+                            }}
+                          ></div>
+                          <div 
+                            className="w-10 h-10 rounded-full border-2 border-white"
+                            style={{
+                              background: `linear-gradient(135deg, ${styles.warning}, ${styles.accent})`
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-base ml-4 font-medium" style={{ color: styles.textLight }}>
+                          3 members
+                        </span>
                       </div>
                     </div>
-                    
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 mt-1">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.textLight }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <p style={{ color: styles.textMedium }}>Phone</p>
-                        <p className="font-medium" style={{ color: styles.textDark }}>+91 9717704058</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 mt-1">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: styles.textLight }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <p style={{ color: styles.textMedium }}>Location</p>
-                        <p className="font-medium" style={{ color: styles.textDark }}>Delhi, India</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-8">
-                    <Link 
-                      to="/contact"
-                      className="ridepool-dashboard-btn ridepool-dashboard-btn-primary w-full py-3 rounded-xl flex items-center justify-center"
-                    >
-                      Contact Us
-                    </Link>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* CTA Section */}
-            {!isAuthenticated && (
-              <div className="mt-20 enhanced-card p-12 text-center animate-fade-in">
-                <h2 className="text-3xl md:text-4xl font-bold mb-6 gradient-text">
-                  Ready to Start Saving?
-                </h2>
-                <p className="text-xl max-w-2xl mx-auto mb-10" style={{ color: styles.textMedium }}>
-                  Join RideBuddy today and never ride alone again!
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link 
-                    to="/register"
-                    className="ridepool-dashboard-btn ridepool-dashboard-btn-primary px-8 py-4 text-lg rounded-xl flex items-center justify-center"
-                  >
-                    <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {/* Contact Section for non-authenticated users */}
+            <div className="relative z-10 py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-indigo-100 mt-20 rounded-3xl">
+              <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-16 animate-fade-in">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 gradient-text">
+                    Get in Touch
+                  </h2>
+                  <p className="text-xl text-gray-700 max-w-3xl mx-auto">
+                    Have questions or feedback? We'd love to hear from you.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Contact Info Card */}
+                  <div className="enhanced-card p-8 bg-white rounded-2xl shadow-2xl hover:shadow-2xl transition-all duration-300">
+                    <div className="text-center">
+                      <div className="feature-icon mx-auto mb-6 bg-indigo-100 text-indigo-600 rounded-2xl">
+                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-6 gradient-text">
+                        Contact Information
+                      </h3>
+                      <div className="space-y-6">
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
+                          <p className="font-semibold text-gray-900 text-lg">Email</p>
+                          <p className="text-gray-700 text-lg">ridebuddyservices@gmail.com</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
+                          <p className="font-semibold text-gray-900 text-lg">Phone</p>
+                          <p className="text-gray-700 text-lg">+91 9717704058</p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50">
+                          <p className="font-semibold text-gray-900 text-lg">Location</p>
+                          <p className="text-gray-700 text-lg">Delhi, India</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Form Card */}
+                  <div className="enhanced-card p-8 bg-white rounded-2xl shadow-2xl hover:shadow-2xl transition-all duration-300">
+                    <div className="text-center">
+                      <div className="feature-icon mx-auto mb-6 bg-indigo-100 text-indigo-600 rounded-2xl">
+                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-6 gradient-text">
+                        Quick Message
+                      </h3>
+                      <p className="text-gray-700 mb-8 text-lg">
+                        Need immediate assistance? Send us a quick message.
+                      </p>
+                      <Link to="/contact" className="ridepool-dashboard-btn ridepool-dashboard-btn-primary w-full py-4 text-lg font-bold rounded-2xl hover:scale-105 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-2xl">
+                        Contact Us
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Section for non-authenticated users */}
+            <div className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
+              <div className="max-w-4xl mx-auto text-center">
+                <div className="enhanced-card p-12 animate-fade-in bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl border-2 border-purple-100">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 gradient-text">
+                    Ready to Start Saving?
+                  </h2>
+                  <p className="text-xl text-gray-700 mb-10 max-w-2xl mx-auto">
+                    Join RideBuddy today and never ride alone again!
+                  </p>
+                  <Link to="/register" className="ridepool-dashboard-btn ridepool-dashboard-btn-primary px-10 py-4 text-lg font-bold rounded-2xl hover:scale-105 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-2xl">
+                    <svg className="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     Sign Up Now
                   </Link>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
-        
-        {/* Professional Footer - Added for non-authenticated users */}
-        <footer className="bg-gray-900 text-white pt-16 pb-8 mt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-              {/* Company Info */}
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold" style={{ color: styles.primary }}>
-                  RideBuddy
-                </h3>
-                <p className="text-gray-400">
-                  Connecting students through shared rides, reducing costs and environmental impact on campus.
-                </p>
-                <div className="flex space-x-4">
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                    </svg>
-                  </a>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
-                  </a>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                    <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                    </svg>
-                  </a>
-                </div>
-              </div>
-              
-              {/* Quick Links */}
-              <div>
-                <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-                <ul className="space-y-2">
-                  <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
-                  <li><Link to="/find-pool" className="text-gray-400 hover:text-white transition-colors">Find Pool</Link></li>
-                </ul>
-              </div>
-              
-              {/* Resources */}
-              <div>
-                <h4 className="text-lg font-semibold mb-4">Resources</h4>
-                <ul className="space-y-2">
-                  <li><Link to="/groups" className="text-gray-400 hover:text-white transition-colors">Groups</Link></li>
-                  <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link></li>
-                </ul>
-              </div>
-              
-              {/* Contact Info */}
-              <div>
-                <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li className="flex items-start">
-                    <svg className="h-5 w-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <span>ridebuddyservices@gmail.com</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-5 w-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <span>+91 9717704058</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-5 w-5 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>Delhi, India</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-800 pt-8 mt-8">
-              <div className="flex flex-col md:flex-row justify-between items-center">
-                <p className="text-gray-400 text-sm">
-                  © {new Date().getFullYear()} RideBuddy. All rights reserved.
-                </p>
-                <div className="mt-4 md:mt-0 flex space-x-6">
-                  <Link to="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">
-                    Privacy Policy
-                  </Link>
-                  <Link to="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
-                    Terms of Service
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
     </>
   );
-};export default HomeDashboard;
+};
+
+export default HomeDashboard;

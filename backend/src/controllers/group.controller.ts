@@ -217,19 +217,7 @@ export const lockGroup = async (req: any, res: Response): Promise<void> => {
         message: 'Only group admin can lock the group'
       });
       return;
-    }
-    
-    // Update group status to Locked
-    group.status = 'Locked';
-    await group.save();
-    
-    res.status(200).json({
-      success: true,
-      data: group
-    });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
+       success: false,
       message: err.message || 'Server Error'
     });
   }
@@ -265,19 +253,8 @@ export const getAllGroups = async (req: any, res: Response): Promise<void> => {
       success: true,
       count: groupsWithAccess.length,
       data: groupsWithAccess
-    });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: err.message || 'Server Error'
-    });
-  }
-};
-
-// @desc    Get open groups
-// @route   GET /api/group/open
-// @access  Public
-export const getOpenGroups = async (req: Request, res: Response): Promise<void> => {
+oupsWithAccess
+d> => {
   try {
     const groups = await Group.find({
       status: 'Open'

@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import RideService from '../services/ride.service';
-import type { Ride } from '../services/ride.service';
+
+interface DriverRide {
+  _id: string;
+  pickup: {
+    address: string;
+  };
+  destination: {
+    address: string;
+  };
+  date: string;
+  time: string;
+  pricePerSeat: number;
+  seatsAvailable: number;
+  riders: {
+    user: {
+      _id: string;
+      name: string;
+    };
+    status: 'Requested' | 'Accepted' | 'Rejected' | 'Paid' | 'Pending Payment';
+  }[];
+}
 
 const DriverWallet: React.FC = () => {
-  const [rides, setRides] = useState<Ride[]>([]);
+  const [rides, setRides] = useState<DriverRide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

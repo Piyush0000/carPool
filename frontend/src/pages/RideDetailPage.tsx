@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import RideService from '../services/ride.service';
-import type { Ride } from '../services/ride.service';
+import type { Ride, RideRider } from '../services/ride.service';
 import DriverPaymentPanel from '../components/DriverPaymentPanel';
 import RiderPaymentPanel from '../components/RiderPaymentPanel';
 import EditRideModal from '../components/EditRideModal';
@@ -95,7 +95,7 @@ const RideDetailPage: React.FC = () => {
     }
   };
 
-  const handleSendPaymentReminder = async () => {
+  const handleSendPaymentReminder = async (riderId: string) => {
     try {
       // In a real implementation, this would send a notification to the rider
       alert(`Payment reminder sent to rider`);
@@ -496,7 +496,7 @@ const RideDetailPage: React.FC = () => {
                               {rider.status === 'Accepted' && (
                                 <>
                                   <button
-                                    onClick={() => handleSendPaymentReminder()}
+                                    onClick={() => handleSendPaymentReminder(rider.user._id)}
                                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                   >
                                     <svg className="-ml-1 mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -527,7 +527,7 @@ const RideDetailPage: React.FC = () => {
                               {rider.status === 'Pending Payment' && (
                                 <>
                                   <button
-                                    onClick={() => handleSendPaymentReminder()}
+                                    onClick={() => handleSendPaymentReminder(rider.user._id)}
                                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                   >
                                     <svg className="-ml-1 mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

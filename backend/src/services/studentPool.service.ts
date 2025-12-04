@@ -1,6 +1,5 @@
 import Group from '../models/Group.model';
 import { v4 as uuidv4 } from 'uuid';
-import mongoose from 'mongoose';
 
 /**
  * Service to manage the special "Student's Own Car Pool" group
@@ -60,7 +59,7 @@ export const addUserToStudentPoolGroup = async (userId: string) => {
     // If not a member, add them
     if (!isMember) {
       studentPoolGroup.members.push({
-        user: new mongoose.Types.ObjectId(userId) as any,
+        user: userId,
         role: 'member',
         joinedAt: new Date()
       });
