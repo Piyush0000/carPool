@@ -30,11 +30,9 @@ const RidesPage: React.FC = () => {
     }
   };
 
-  const handleCreateRide = async (ride: Ride) => {
+  const handleCreateRide = async () => {
     setShowCreateForm(false);
     await loadRides();
-    // Optionally navigate to the new ride detail page
-    // navigate(`/rides/${ride._id}`);
   };
 
   const handleRequestSeat = async (rideId: string) => {

@@ -55,13 +55,7 @@ const HomeDashboard: React.FC = () => {
     }
   };
 
-  const handleCreateGroup = () => {
-    navigate('/groups');
-  };
 
-  const handleJoinGroup = () => {
-    navigate('/find-pool');
-  };
 
   // Component-specific styles
   const styles = {

@@ -246,7 +246,7 @@ const RiderPaymentPanel: React.FC<RiderPaymentPanelProps> = ({ ride, currentUser
             <h4 className="text-md font-medium text-gray-900 mb-4">Payment Progress</h4>
             <div className="flow-root">
               <ul className="relative border-l border-gray-200 ml-3">
-                {getPaymentTimelineSteps(currentRider?.status || '').map((step, index) => (
+                {getPaymentTimelineSteps(currentRider?.status || '').map((step) => (
                   <li key={step.id} className="mb-6 ml-6">
                     <div className={`absolute w-3 h-3 rounded-full -left-1.5 ${
                       step.status === 'completed' ? 'bg-green-500' : 
