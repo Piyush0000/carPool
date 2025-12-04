@@ -73,6 +73,7 @@ export const poolAPI = {
 export const groupAPI = {
   create: (data: any) => api.post('/api/group', data),
   getAll: () => api.get('/api/group'),
+  getOpenGroups: () => api.get('/api/group/open'),
   getMyGroups: () => api.get('/api/group/mygroups'),
   getById: (id: string) => api.get(`/api/group/${id}`),
   join: (id: string) => api.post(`/api/group/join/${id}`),
@@ -95,6 +96,11 @@ export const notificationAPI = {
   markAsRead: (id: string) => api.put(`/api/notifications/${id}/read`),
   markAllAsRead: () => api.put('/api/notifications/read-all'),
   delete: (id: string) => api.delete(`/api/notifications/${id}`),
+};
+
+// Statistics APIs
+export const statsAPI = {
+  getPublicStats: () => api.get('/api/stats/public'),
 };
 
 // Admin APIs

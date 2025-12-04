@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { groupAPI } from '../services/api.service';
 import MapInput from '../components/MapInput';
+import { useAuth } from '../contexts/AuthContext';
 
 interface GroupMember {
   user: {
@@ -52,6 +53,7 @@ const GroupsPage: React.FC = () => {
   const [seatCount, setSeatCount] = useState(4);
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const { isAuthenticated } = useAuth();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -169,12 +171,22 @@ const GroupsPage: React.FC = () => {
     try {
       setLoading(true);
       
-      const response = viewMode === 'all' 
-        ? await groupAPI.getAll() 
-        : await groupAPI.getMyGroups();
+      // For unauthenticated users, use the public endpoint
+      // For authenticated users, use the protected endpoint based on view mode
+      let response;
+      if (!isAuthenticated) {
+        response = await groupAPI.getOpenGroups();
+        setAllGroups(response.data.data); // Store all groups
+        setGroups(response.data.data); // Initially show all groups
+      } else {
+        response = viewMode === 'all' 
+          ? await groupAPI.getAll() 
+          : await groupAPI.getMyGroups();
+        
+        setAllGroups(response.data.data); // Store all groups
+        setGroups(response.data.data); // Initially show all groups
+      }
       
-      setAllGroups(response.data.data); // Store all groups
-      setGroups(response.data.data); // Initially show all groups
       setError(null);
     } catch (err: any) {
       console.error('Error loading groups:', err);
@@ -186,6 +198,11 @@ const GroupsPage: React.FC = () => {
 
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is authenticated before proceeding
+    if (!(window as any).handleProtectedAction || !(window as any).handleProtectedAction()) {
+      return;
+    }
     
     // Validate form
     if (!groupName.trim()) {
@@ -273,6 +290,11 @@ const GroupsPage: React.FC = () => {
   };
 
   const handleJoinGroup = async (groupId: string) => {
+    // Check if user is authenticated before proceeding
+    if (!(window as any).handleProtectedAction || !(window as any).handleProtectedAction()) {
+      return;
+    }
+    
     try {
       setJoiningGroupId(groupId);
       await groupAPI.join(groupId);
@@ -288,6 +310,11 @@ const GroupsPage: React.FC = () => {
   };
 
   const goToGroupDetail = (groupId: string) => {
+    // Check if user is authenticated before proceeding
+    if (!(window as any).handleProtectedAction && !(window as any).handleProtectedAction()) {
+      return;
+    }
+    
     navigate(`/group/${groupId}`);
   };
 
@@ -373,12 +400,18 @@ const GroupsPage: React.FC = () => {
                 onClick={() => {
                   setViewMode('my');
                 }}
-                className={`px-4 py-2 rounded-lg font-medium ${viewMode === 'my' ? 'ridepool-btn ridepool-btn-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                disabled={!isAuthenticated}
+                className={`px-4 py-2 rounded-lg font-medium ${viewMode === 'my' ? 'ridepool-btn ridepool-btn-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={!isAuthenticated ? 'Please sign in to view your groups' : ''}
               >
                 My Groups
               </button>
               <button
                 onClick={() => {
+                  // Check if user is authenticated before showing create form
+                  if (!(window as any).handleProtectedAction || !(window as any).handleProtectedAction()) {
+                    return;
+                  }
                   setShowCreateForm(!showCreateForm);
                   setError(null);
                   if (!showCreateForm) resetForm();
@@ -671,25 +704,41 @@ const GroupsPage: React.FC = () => {
                     </div>
                     
                     {viewMode === 'all' && (
-                      group.isMember ? (
-                        <span className="text-sm text-green-600 font-medium">Member</span>
-                      ) : group.canJoin ? (
+                      isAuthenticated ? (
+                        group.isMember ? (
+                          <span className="text-sm text-green-600 font-medium">Member</span>
+                        ) : group.canJoin ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleJoinGroup(group._id);
+                            }}
+                            disabled={joiningGroupId === group._id}
+                            className="ridepool-btn ridepool-btn-primary text-sm px-4 py-2"
+                          >
+                            {joiningGroupId === group._id ? 'Joining...' : 'Join'}
+                          </button>
+                        ) : (
+                          <span className="text-sm text-gray-500">
+                            {group.status === 'Locked' ? 'Locked' : 'Full'}
+                          </span>
+                        )
+                      ) : (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleJoinGroup(group._id);
+                            // Trigger authentication prompt
+                            if ((window as any).handleProtectedAction) {
+                              (window as any).handleProtectedAction();
+                            }
                           }}
-                          disabled={joiningGroupId === group._id}
                           className="ridepool-btn ridepool-btn-primary text-sm px-4 py-2"
                         >
-                          {joiningGroupId === group._id ? 'Joining...' : 'Join'}
+                          Join Group
                         </button>
-                      ) : (
-                        <span className="text-sm text-gray-500">
-                          {group.status === 'Locked' ? 'Locked' : 'Full'}
-                        </span>
                       )
                     )}
+
                   </div>
                 </div>
               ))}

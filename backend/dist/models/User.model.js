@@ -55,6 +55,7 @@ const UserSchema = new mongoose_1.Schema({
     phone: {
         type: String,
         required: true,
+        unique: true,
         default: 'N/A'
     },
     gender: {

@@ -21,7 +21,8 @@ import chatRoutes from './routes/chat.routes';
 import locationRoutes from './routes/location.routes';
 import notificationRoutes from './routes/notification.routes';
 import geoapifyRoutes from './routes/geoapify.routes';
-
+import contactRoutes from './routes/contact.routes';
+import statsRoutes from './routes/stats.routes';
 // Initialize app
 const app = express();
 const server = http.createServer(app);
@@ -146,6 +147,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/geoapify', geoapifyRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
@@ -162,7 +165,6 @@ app.get('/api/health', (req: Request, res: Response) => {
     }
   });
 });
-
 // Test CORS endpoint
 app.get('/api/test-cors', (req: Request, res: Response) => {
   res.status(200).json({

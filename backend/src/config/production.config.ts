@@ -1,10 +1,16 @@
-// Production configuration settings
-// Parse allowed origins from environment variable
-const allowedOriginsStr = process.env.ALLOWED_ORIGINS || 'https://car-pool-flax.vercel.app';
-const allowedOrigins = allowedOriginsStr.split(',').map(origin => origin.trim());
+// backend/src/config/production.config.ts
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5000',
+  'http://localhost:3000',
+  'https://campus-cab-pool.vercel.app',
+  'https://campus-cab-pool-git-dev-piyushrathore03s-projects.vercel.app',
+  'https://*.vercel.app',
+  'https://*.railway.app',
+  'https://campus-cab-pool-production.up.railway.app'
+];
 
-export const productionConfig = {
-  // MongoDB configuration
+const productionConfig = {
   mongodb: {
     uri: process.env.MONGODB_URI_PROD || process.env.MONGODB_URI || 'mongodb+srv://piyushrathore:piyushcodes@cluster0.wiqfcjk.mongodb.net/carpoolgrp?retryWrites=true&w=majority&appName=Cluster0',
     options: {
@@ -51,7 +57,8 @@ export const productionConfig = {
     email: {
       service: process.env.EMAIL_SERVICE || 'gmail',
       username: process.env.EMAIL_USERNAME || '',
-      password: process.env.EMAIL_PASSWORD || ''
+      password: process.env.EMAIL_PASSWORD || '',
+      contactEmail: process.env.CONTACT_EMAIL || 'ridebuddyservices@gmail.com'
     },
     payment: {
       stripe: {
