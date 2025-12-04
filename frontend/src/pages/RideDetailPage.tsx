@@ -95,7 +95,7 @@ const RideDetailPage: React.FC = () => {
     }
   };
 
-  const handleSendPaymentReminder = async (riderId: string) => {
+  const handleSendPaymentReminder = async () => {
     try {
       // In a real implementation, this would send a notification to the rider
       alert(`Payment reminder sent to rider`);
@@ -496,7 +496,7 @@ const RideDetailPage: React.FC = () => {
                               {rider.status === 'Accepted' && (
                                 <>
                                   <button
-                                    onClick={() => handleSendPaymentReminder(rider.user._id)}
+                                    onClick={() => handleSendPaymentReminder()}
                                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                   >
                                     <svg className="-ml-1 mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -527,7 +527,7 @@ const RideDetailPage: React.FC = () => {
                               {rider.status === 'Pending Payment' && (
                                 <>
                                   <button
-                                    onClick={() => handleSendPaymentReminder(rider.user._id)}
+                                    onClick={() => handleSendPaymentReminder()}
                                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                   >
                                     <svg className="-ml-1 mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
