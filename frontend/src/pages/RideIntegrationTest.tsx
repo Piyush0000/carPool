@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import RideService from '../services/ride.service';
 import RideCreator from '../components/RideCreator';
 import RideList from '../components/RideList';
@@ -15,7 +14,6 @@ const RideIntegrationTest: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedRideForPayment, setSelectedRideForPayment] = useState<any>(null);
-  // const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
