@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc --skipLibCheck",
     "build:fallback": "tsc --skipLibCheck",
-    "start": "node dist/server.js",
+    "start": "node --max-old-space-size=512 dist/server.js",
     "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
     "dev:debug": "nodemon --exec node --inspect -r ts-node/register -r tsconfig-paths/register src/server.ts",
     "clean": "rm -rf dist",
