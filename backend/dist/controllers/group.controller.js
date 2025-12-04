@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.matchGroups = exports.getGroup = exports.getUserGroups = exports.getAllGroups = exports.lockGroup = exports.leaveGroup = exports.joinGroup = exports.createGroup = void 0;
+exports.matchGroups = exports.getGroup = exports.getUserGroups = exports.getOpenGroups = exports.getAllGroups = exports.lockGroup = exports.leaveGroup = exports.joinGroup = exports.createGroup = void 0;
 const Group_model_1 = __importDefault(require("../models/Group.model"));
 const uuid_1 = require("uuid");
 const createGroup = async (req, res) => {
@@ -210,6 +210,25 @@ const getAllGroups = async (req, res) => {
     }
 };
 exports.getAllGroups = getAllGroups;
+const getOpenGroups = async (req, res) => {
+    try {
+        const groups = await Group_model_1.default.find({
+            status: 'Open'
+        }).populate('members.user', 'name email phone year branch');
+        res.status(200).json({
+            success: true,
+            count: groups.length,
+            data: groups
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Server Error'
+        });
+    }
+};
+exports.getOpenGroups = getOpenGroups;
 const getUserGroups = async (req, res) => {
     try {
         const groups = await Group_model_1.default.find({
