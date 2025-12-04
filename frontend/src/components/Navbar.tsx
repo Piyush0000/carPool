@@ -105,7 +105,7 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/dashboard" className="flex-shrink-0 flex items-center">
+            <Link to="/" className="flex-shrink-0 flex items-center">
               <span className="text-xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent hover-lift">
                 RideBuddy
               </span>
@@ -115,8 +115,8 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
-                  Dashboard
+                <Link to="/" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
+                  Home
                 </Link>
                 <Link to="/find-pool" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
                   Find Pool
@@ -251,6 +251,58 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <>
+                <Link to="/" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
+                  Home
+                </Link>
+                <Link to="/find-pool" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
+                  Find Pool
+                </Link>
+                <Link to="/groups" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
+                  Groups
+                </Link>
+                
+                {/* College Dropdown for non-authenticated users */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowCollegeDropdown(!showCollegeDropdown)}
+                    className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    Colleges
+                    <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {showCollegeDropdown && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="py-1">
+                        {colleges.map((college) => (
+                          <button
+                            key={college.id}
+                            onClick={() => handleCollegeSelect(college.id)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                          >
+                            {college.name}
+                          </button>
+                        ))}
+                        <div className="border-t border-gray-200 my-1"></div>
+                        <button
+                          onClick={handleOtherColleges}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-medium"
+                        >
+                          Other Colleges
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <Link to="/contact" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
+                  Contact
+                </Link>
                 <Link to="/login" className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200 hover-lift">
                   Login
                 </Link>
@@ -281,8 +333,8 @@ const Navbar: React.FC = () => {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
-                  Dashboard
+                <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
+                  Home
                 </Link>
                 <Link to="/find-pool" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
                   Find Pool
@@ -342,6 +394,53 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <>
+                <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
+                  Home
+                </Link>
+                <Link to="/find-pool" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
+                  Find Pool
+                </Link>
+                <Link to="/groups" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
+                  Groups
+                </Link>
+                
+                {/* Mobile College Dropdown for non-authenticated users */}
+                <div className="px-3 py-2">
+                  <button 
+                    onClick={() => setShowCollegeDropdown(!showCollegeDropdown)}
+                    className="w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-between"
+                  >
+                    <span>Colleges</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {showCollegeDropdown && (
+                    <div className="mt-2 ml-4 space-y-1">
+                      {colleges.map((college) => (
+                        <button
+                          key={college.id}
+                          onClick={() => handleCollegeSelect(college.id)}
+                          className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded"
+                        >
+                          {college.name}
+                        </button>
+                      ))}
+                      <div className="border-t border-gray-200 my-1"></div>
+                      <button
+                        onClick={handleOtherColleges}
+                        className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded font-medium"
+                      >
+                        Other Colleges
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                <Link to="/contact" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
+                  Contact
+                </Link>
                 <Link to="/login" className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-100 transition-colors duration-200">
                   Login
                 </Link>

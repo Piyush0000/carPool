@@ -1,14 +1,15 @@
 import nodemailer from 'nodemailer';
 import { IUser } from '../models/User.model';
+import config from '../config';
 
 // Create transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.EMAIL_PORT || '587'),
   secure: false, // true for 465, false for other ports
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER || config.services?.email?.username,
+    pass: process.env.EMAIL_PASS || config.services?.email?.password,
   },
 });
 
@@ -22,7 +23,7 @@ export const sendEmailVerification = async (user: IUser, token: string): Promise
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}&userId=${user._id}`;
     
     const mailOptions = {
-      from: `"Ride Pool" <${process.env.EMAIL_USER}>`,
+      from: `"Ride Pool" <${process.env.EMAIL_USER || config.services?.email?.username}>`,
       to: user.email,
       subject: 'Verify your email address',
       html: `
@@ -67,7 +68,7 @@ export const sendPasswordReset = async (user: IUser, token: string): Promise<voi
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}&userId=${user._id}`;
     
     const mailOptions = {
-      from: `"Ride Pool" <${process.env.EMAIL_USER}>`,
+      from: `"Ride Pool" <${process.env.EMAIL_USER || config.services?.email?.username}>`,
       to: user.email,
       subject: 'Password Reset Request',
       html: `
@@ -103,7 +104,64 @@ export const sendPasswordReset = async (user: IUser, token: string): Promise<voi
   }
 };
 
+/**
+ * Send contact form email to admin
+ * @param name - Sender's name
+ * @param email - Sender's email
+ * @param subject - Email subject
+ * @param message - Email message
+ */
+export const sendContactFormEmail = async (name: string, email: string, subject: string, message: string): Promise<void> => {
+  try {
+    const mailOptions = {
+      from: `"Ride Pool Contact Form" <${process.env.EMAIL_USER || config.services?.email?.username}>`,
+      to: process.env.CONTACT_EMAIL || config.services?.email?.contactEmail || 'ridebuddyservices@gmail.com',
+      replyTo: email,
+      subject: `[Contact Form] ${subject}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #4f46e5;">New Contact Form Submission</h2>
+          <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Message Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold; width: 100px;">Name:</td>
+                <td style="padding: 8px 0;">${name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold;">Email:</td>
+                <td style="padding: 8px 0;">${email}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold;">Subject:</td>
+                <td style="padding: 8px 0;">${subject}</td>
+              </tr>
+            </table>
+          </div>
+          <div style="margin: 20px 0;">
+            <h3 style="margin-top: 0;">Message:</h3>
+            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
+              <p style="margin: 0; white-space: pre-wrap;">${message}</p>
+            </div>
+          </div>
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 14px;">
+            This message was sent from the contact form on Ride Pool website.
+          </p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Contact form email sent successfully');
+  } catch (error) {
+    console.error('Error sending contact form email:', error);
+    throw new Error('Failed to send contact form email');
+  }
+};
+
 export default {
   sendEmailVerification,
   sendPasswordReset,
+  sendContactFormEmail,
 };

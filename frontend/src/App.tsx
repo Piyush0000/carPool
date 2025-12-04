@@ -3,18 +3,20 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
+import HomeDashboard from './pages/HomeDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import FindPool from './pages/FindPool';
 import GroupDetail from './pages/GroupDetail';
 import Profile from './pages/Profile';
-import RidePoolDashboard from './components/RidePoolDashboard';
+// import RidePoolDashboard from './components/RidePoolDashboard';
 import GroupsPage from './pages/GroupsPage';
 import GroupChatPage from './pages/GroupChatPage';
 import EmailVerification from './pages/EmailVerification';
 import AdminPanel from './pages/AdminPanel';
 import AdminRoute from './components/AdminRoute';
+import ContactUs from './pages/ContactUs';
+import ViewOnlyRoute from './components/ViewOnlyRoute';
 import './index.css';
 import './styles/RidePool.css';
 
@@ -71,7 +73,12 @@ function App() {
             <Routes>
               <Route path="/" element={
                 <PublicRoute>
-                  <Home />
+                  <div className="min-h-screen flex flex-col">
+                    <Navbar />
+                    <main className="flex-grow pt-16">
+                      <HomeDashboard />
+                    </main>
+                  </div>
                 </PublicRoute>
               } />
               <Route path="/login" element={
@@ -84,25 +91,32 @@ function App() {
                   <Register />
                 </PublicRoute>
               } />
+              <Route path="/contact" element={
+                <PublicRoute>
+                  <ContactUs />
+                </PublicRoute>
+              } />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <div className="min-h-screen flex flex-col">
                     <Navbar />
                     <main className="flex-grow pt-16">
-                      <RidePoolDashboard />
+                      <HomeDashboard />
                     </main>
                   </div>
                 </ProtectedRoute>
               } />
               <Route path="/find-pool" element={
-                <ProtectedRoute>
+                <PublicRoute>
                   <div className="min-h-screen flex flex-col">
                     <Navbar />
                     <main className="flex-grow pt-16">
-                      <FindPool />
+                      <ViewOnlyRoute featureName="Find Pool">
+                        <FindPool />
+                      </ViewOnlyRoute>
                     </main>
                   </div>
-                </ProtectedRoute>
+                </PublicRoute>
               } />
               <Route path="/admin" element={
                 <ProtectedRoute>
@@ -140,14 +154,16 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/groups" element={
-                <ProtectedRoute>
+                <PublicRoute>
                   <div className="min-h-screen flex flex-col">
                     <Navbar />
                     <main className="flex-grow pt-16">
-                      <GroupsPage />
+                      <ViewOnlyRoute featureName="Groups">
+                        <GroupsPage />
+                      </ViewOnlyRoute>
                     </main>
                   </div>
-                </ProtectedRoute>
+                </PublicRoute>
               } />
               <Route path="/group-chat/:groupId" element={
                 <ProtectedRoute>

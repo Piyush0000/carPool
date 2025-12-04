@@ -99,6 +99,20 @@ const GroupSchema = new mongoose_1.Schema({
     description: {
         type: String,
         trim: true
+    },
+    uberLocations: {
+        pickup: {
+            coordinates: {
+                type: [Number],
+                index: '2dsphere'
+            }
+        },
+        drop: {
+            coordinates: {
+                type: [Number],
+                index: '2dsphere'
+            }
+        }
     }
 }, {
     timestamps: true

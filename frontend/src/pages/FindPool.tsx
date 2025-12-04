@@ -30,6 +30,11 @@ const FindPool: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check if user is authenticated before proceeding
+    if (!(window as any).handleProtectedAction && !(window as any).handleProtectedAction()) {
+      return;
+    }
+    
     try {
       setLoading(true);
       setSearched(true);
@@ -87,6 +92,11 @@ const FindPool: React.FC = () => {
 
   // Function to create a new group when no matches are found
   const handleCreateGroup = async () => {
+    // Check if user is authenticated before proceeding
+    if (!(window as any).handleProtectedAction && !(window as any).handleProtectedAction()) {
+      return;
+    }
+    
     try {
       // Navigate to the group creation page, passing the search data
       navigate('/groups', { 

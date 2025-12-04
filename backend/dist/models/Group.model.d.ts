@@ -16,6 +16,14 @@ export interface IGroup extends Document {
             coordinates: [number, number];
         };
     };
+    uberLocations?: {
+        pickup?: {
+            coordinates: [number, number];
+        };
+        drop?: {
+            coordinates: [number, number];
+        };
+    };
     dateTime: Date;
     seatCount: number;
     status: 'Open' | 'Locked' | 'Completed';

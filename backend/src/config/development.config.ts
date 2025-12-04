@@ -43,6 +43,12 @@ export const developmentConfig = {
     },
     geoapify: {
       apiKey: process.env.GEOAPIFY_API_KEY || ''
+    },
+    email: {
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      username: process.env.EMAIL_USERNAME || '',
+      password: process.env.EMAIL_PASSWORD || '',
+      contactEmail: process.env.CONTACT_EMAIL || 'ridebuddyservices@gmail.com'
     }
   }
 };
