@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import MapInput from '../components/MapInput';
 
 const FindPool: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     pickup: '',
     drop: '',
@@ -30,8 +32,10 @@ const FindPool: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if user is authenticated before proceeding
-    if (!(window as any).handleProtectedAction && !(window as any).handleProtectedAction()) {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      // Redirect to login for non-authenticated users
+      navigate('/login');
       return;
     }
     
@@ -92,8 +96,10 @@ const FindPool: React.FC = () => {
 
   // Function to create a new group when no matches are found
   const handleCreateGroup = async () => {
-    // Check if user is authenticated before proceeding
-    if (!(window as any).handleProtectedAction && !(window as any).handleProtectedAction()) {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      // Redirect to login for non-authenticated users
+      navigate('/login');
       return;
     }
     

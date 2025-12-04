@@ -1,3 +1,0 @@
-# This is a monorepo with separate frontend and backend services.
-# Deploy each service separately using their individual render.yaml files.
-# See frontend/render.yaml and backend/render.yaml for service configurations.

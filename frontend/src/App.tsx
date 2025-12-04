@@ -9,14 +9,12 @@ import Register from './pages/Register';
 import FindPool from './pages/FindPool';
 import GroupDetail from './pages/GroupDetail';
 import Profile from './pages/Profile';
-// import RidePoolDashboard from './components/RidePoolDashboard';
 import GroupsPage from './pages/GroupsPage';
 import GroupChatPage from './pages/GroupChatPage';
 import EmailVerification from './pages/EmailVerification';
 import AdminPanel from './pages/AdminPanel';
 import AdminRoute from './components/AdminRoute';
 import ContactUs from './pages/ContactUs';
-import ViewOnlyRoute from './components/ViewOnlyRoute';
 import './index.css';
 import './styles/RidePool.css';
 
@@ -57,10 +55,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-// Public Route Component
+// Public Route Component - allows both authenticated and non-authenticated users
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" />;
+  return <>{children}</>;
 };
 
 function App() {
@@ -71,6 +68,7 @@ function App() {
           <div className="min-h-screen text-gray-900 relative">
             <BackgroundAnimation />
             <Routes>
+              {/* Home Dashboard is now the main landing page */}
               <Route path="/" element={
                 <PublicRoute>
                   <div className="min-h-screen flex flex-col">
@@ -93,9 +91,36 @@ function App() {
               } />
               <Route path="/contact" element={
                 <PublicRoute>
-                  <ContactUs />
+                  <div className="min-h-screen flex flex-col">
+                    <Navbar />
+                    <main className="flex-grow pt-16">
+                      <ContactUs />
+                    </main>
+                  </div>
                 </PublicRoute>
               } />
+              {/* Allow public access to groups and find-pool pages */}
+              <Route path="/groups" element={
+                <PublicRoute>
+                  <div className="min-h-screen flex flex-col">
+                    <Navbar />
+                    <main className="flex-grow pt-16">
+                      <GroupsPage />
+                    </main>
+                  </div>
+                </PublicRoute>
+              } />
+              <Route path="/find-pool" element={
+                <PublicRoute>
+                  <div className="min-h-screen flex flex-col">
+                    <Navbar />
+                    <main className="flex-grow pt-16">
+                      <FindPool />
+                    </main>
+                  </div>
+                </PublicRoute>
+              } />
+              {/* Protected routes remain the same */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <div className="min-h-screen flex flex-col">
@@ -105,18 +130,6 @@ function App() {
                     </main>
                   </div>
                 </ProtectedRoute>
-              } />
-              <Route path="/find-pool" element={
-                <PublicRoute>
-                  <div className="min-h-screen flex flex-col">
-                    <Navbar />
-                    <main className="flex-grow pt-16">
-                      <ViewOnlyRoute featureName="Find Pool">
-                        <FindPool />
-                      </ViewOnlyRoute>
-                    </main>
-                  </div>
-                </PublicRoute>
               } />
               <Route path="/admin" element={
                 <ProtectedRoute>
@@ -152,18 +165,6 @@ function App() {
                     </main>
                   </div>
                 </ProtectedRoute>
-              } />
-              <Route path="/groups" element={
-                <PublicRoute>
-                  <div className="min-h-screen flex flex-col">
-                    <Navbar />
-                    <main className="flex-grow pt-16">
-                      <ViewOnlyRoute featureName="Groups">
-                        <GroupsPage />
-                      </ViewOnlyRoute>
-                    </main>
-                  </div>
-                </PublicRoute>
               } />
               <Route path="/group-chat/:groupId" element={
                 <ProtectedRoute>
