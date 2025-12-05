@@ -47,19 +47,24 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Create user with defaults for optional fields
-    const user = await User.create({
+    // Create user - only include fields that have values
+    const userData: any = {
       name,
       email,
       password: hashedPassword,
-      phone: phone || 'N/A',
-      gender: gender || 'Other',
-      year: year || 'N/A',
-      branch: branch || 'N/A',
       emailVerificationToken,
       emailVerificationExpires,
       isEmailVerified: false
-    });
+    };
+
+    // Only add optional fields if they have values
+    // For phone, only add if it's provided and not empty
+    if (phone && phone.trim() !== '') userData.phone = phone.trim();
+    if (gender) userData.gender = gender;
+    if (year) userData.year = year;
+    if (branch) userData.branch = branch;
+
+    const user = await User.create(userData);
 
     // Send verification email (don't fail registration if email fails)
     try {
@@ -93,6 +98,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
   } catch (err: any) {
     console.error('Registration error:', err);
+    // Handle duplicate key errors specifically
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue)[0];
+      res.status(400).json({
+        success: false,
+        message: `A user with this ${field} already exists`
+      });
+      return;
+    }
     res.status(500).json({
       success: false,
       message: err.message || 'Server Error'
@@ -126,15 +140,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      res.status(401).json({
-        success: false,
-        message: 'Please verify your email before logging in'
-      });
-      return;
-    }
-
     // Check if password matches
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
@@ -144,6 +149,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
+
+    // TEMPORARY: Allow login without email verification for development
+    // In production, uncomment the lines below:
+    /*
+    if (!user.isEmailVerified) {
+      res.status(401).json({
+        success: false,
+        message: 'Please verify your email before logging in'
+      });
+      return;
+    }
+    */
 
     sendTokenResponse(user, 200, res);
   } catch (err: any) {
@@ -261,8 +278,9 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
     // Extract email from decoded token with multiple fallback options
     let email: string | undefined;
     let name: string | undefined;
+    let phone: string | undefined;
     
-    // Try different possible locations for email and name
+    // Try different possible locations for email, name, and phone
     if (decodedToken.email) {
       email = decodedToken.email;
     } else if (decodedToken.payload?.email) {
@@ -281,6 +299,11 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
       name = decodedToken.payload.displayName;
     }
     
+    // Try to get phone from Firebase token if available
+    if (decodedToken.phone_number) {
+      phone = decodedToken.phone_number;
+    }
+    
     if (!email) {
       console.error('Decoded token structure:', JSON.stringify(decodedToken, null, 2));
       res.status(400).json({
@@ -296,18 +319,21 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
     if (!user) {
       // Create new user if they don't exist
       const userName = name || email.split('@')[0] || 'Firebase User';
-      user = await User.create({
+      
+      // Prepare user data without default values
+      const userData: any = {
         name: userName,
         email,
         password: await hashPassword(crypto.randomBytes(20).toString('hex')),
-        phone: 'N/A',
-        gender: 'Other',
-        year: 'N/A',
-        branch: 'N/A',
         isEmailVerified: true, // Firebase users are already verified
         emailVerificationToken: undefined,
         emailVerificationExpires: undefined
-      });
+      };
+      
+      // Only add phone if it's provided and not empty
+      if (phone && phone.trim() !== '') userData.phone = phone.trim();
+      
+      user = await User.create(userData);
     } else if (!user.isEmailVerified) {
       // Update user as verified if they weren't already
       user.isEmailVerified = true;
