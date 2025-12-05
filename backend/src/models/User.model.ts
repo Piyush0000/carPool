@@ -52,7 +52,14 @@ const UserSchema: Schema = new Schema({
   phone: {
     type: String,
     sparse: true,
-    unique: true
+    unique: true,
+    set: function(phone: string | null | undefined) {
+      // Remove null, undefined, or empty string values
+      if (phone === null || phone === undefined || phone === '' || phone === 'N/A') {
+        return undefined;
+      }
+      return phone;
+    }
   },
   gender: {
     type: String,
@@ -116,9 +123,6 @@ const UserSchema: Schema = new Schema({
 UserSchema.index({ 'frequentRoute.home.coordinates': '2dsphere' });
 UserSchema.index({ 'frequentRoute.college.coordinates': '2dsphere' });
 UserSchema.index({ 'liveLocation.coordinates': '2dsphere' });
-
-// Explicitly define the sparse unique index for phone
-UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
 
 const User = mongoose.model<IUser>('User', UserSchema);
 export default User;

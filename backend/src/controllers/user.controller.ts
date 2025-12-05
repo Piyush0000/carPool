@@ -73,6 +73,16 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 // @access  Private/Admin
 export const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Handle phone field to prevent null values
+    if (req.body.phone) {
+      if (req.body.phone === null || req.body.phone === undefined || 
+          req.body.phone === '' || req.body.phone === 'N/A') {
+        delete req.body.phone;
+      } else {
+        req.body.phone = req.body.phone.trim();
+      }
+    }
+    
     const user = await User.create(req.body);
     
     res.status(201).json({
@@ -105,10 +115,24 @@ export const updateUser = async (req: any, res: Response): Promise<void> => {
     if (req.body.password) {
       req.body.password = await hashPassword(req.body.password);
     }
+    
+    // Handle phone field to prevent null values
+    let updateData = { ...req.body };
+    if ('phone' in req.body) {
+      if (req.body.phone === null || req.body.phone === undefined || 
+          req.body.phone === '' || req.body.phone === 'N/A') {
+        // Remove phone field if it's null/empty
+        updateData.$unset = { phone: "" };
+        delete updateData.phone;
+      } else {
+        // Trim phone if it has a value
+        updateData.phone = req.body.phone.trim();
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       {
         new: true,
         runValidators: true

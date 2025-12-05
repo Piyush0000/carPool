@@ -13,6 +13,7 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "type-check": "tsc --noEmit",
+    "fix-phone-values": "ts-node -r tsconfig-paths/register src/scripts/fix-phone-null-values.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
