@@ -1,17 +1,9 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { IUser } from '../models/User.model';
 import config from '../config';
 
-// Create transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER || config.services?.email?.username,
-    pass: process.env.EMAIL_PASS || config.services?.email?.password,
-  },
-});
+// Initialize Resend with API key
+const resend = new Resend(process.env.RESEND_API_KEY || 're_YOUR_API_KEY_HERE');
 
 /**
  * Send email verification token
@@ -22,9 +14,9 @@ export const sendEmailVerification = async (user: IUser, token: string): Promise
   try {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}&userId=${user._id}`;
     
-    const mailOptions = {
-      from: `"Ride Pool" <${process.env.EMAIL_USER || config.services?.email?.username}>`,
-      to: user.email,
+    const { data, error } = await resend.emails.send({
+      from: process.env.FROM_EMAIL || 'Ride Pool <onboarding@resend.dev>',
+      to: [user.email],
       subject: 'Verify your email address',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -48,10 +40,14 @@ export const sendEmailVerification = async (user: IUser, token: string): Promise
           </p>
         </div>
       `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-    console.log('Email verification sent successfully');
+    if (error) {
+      console.error('Resend error:', error);
+      throw new Error('Failed to send verification email');
+    }
+
+    console.log('Email verification sent successfully:', data);
   } catch (error) {
     console.error('Error sending email verification:', error);
     throw new Error('Failed to send verification email');
@@ -67,9 +63,9 @@ export const sendPasswordReset = async (user: IUser, token: string): Promise<voi
   try {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}&userId=${user._id}`;
     
-    const mailOptions = {
-      from: `"Ride Pool" <${process.env.EMAIL_USER || config.services?.email?.username}>`,
-      to: user.email,
+    const { data, error } = await resend.emails.send({
+      from: process.env.FROM_EMAIL || 'Ride Pool <onboarding@resend.dev>',
+      to: [user.email],
       subject: 'Password Reset Request',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -94,10 +90,14 @@ export const sendPasswordReset = async (user: IUser, token: string): Promise<voi
           </p>
         </div>
       `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent successfully');
+    if (error) {
+      console.error('Resend error:', error);
+      throw new Error('Failed to send password reset email');
+    }
+
+    console.log('Password reset email sent successfully:', data);
   } catch (error) {
     console.error('Error sending password reset email:', error);
     throw new Error('Failed to send password reset email');
@@ -113,10 +113,10 @@ export const sendPasswordReset = async (user: IUser, token: string): Promise<voi
  */
 export const sendContactFormEmail = async (name: string, email: string, subject: string, message: string): Promise<void> => {
   try {
-    const mailOptions = {
-      from: `"Ride Pool Contact Form" <${process.env.EMAIL_USER || config.services?.email?.username}>`,
-      to: process.env.CONTACT_EMAIL || config.services?.email?.contactEmail || 'ridebuddyservices@gmail.com',
-      replyTo: email,
+    const { data, error } = await resend.emails.send({
+      from: process.env.FROM_EMAIL || 'Ride Pool <onboarding@resend.dev>',
+      to: [process.env.CONTACT_EMAIL || config.services?.email?.contactEmail || 'ridebuddyservices@gmail.com'],
+      reply_to: email,
       subject: `[Contact Form] ${subject}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -150,10 +150,14 @@ export const sendContactFormEmail = async (name: string, email: string, subject:
           </p>
         </div>
       `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-    console.log('Contact form email sent successfully');
+    if (error) {
+      console.error('Resend error:', error);
+      throw new Error('Failed to send contact form email');
+    }
+
+    console.log('Contact form email sent successfully:', data);
   } catch (error) {
     console.error('Error sending contact form email:', error);
     throw new Error('Failed to send contact form email');

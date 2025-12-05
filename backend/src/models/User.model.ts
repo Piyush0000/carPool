@@ -4,7 +4,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  phone: string;
+  phone?: string;
   gender?: 'Male' | 'Female' | 'Other';
   year?: string;
   branch?: string;
@@ -51,9 +51,8 @@ const UserSchema: Schema = new Schema({
   },
   phone: {
     type: String,
-    required: true,
-    unique: true,
-    default: 'N/A'
+    sparse: true,
+    unique: true
   },
   gender: {
     type: String,
@@ -117,6 +116,9 @@ const UserSchema: Schema = new Schema({
 UserSchema.index({ 'frequentRoute.home.coordinates': '2dsphere' });
 UserSchema.index({ 'frequentRoute.college.coordinates': '2dsphere' });
 UserSchema.index({ 'liveLocation.coordinates': '2dsphere' });
+
+// Explicitly define the sparse unique index for phone
+UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
 
 const User = mongoose.model<IUser>('User', UserSchema);
 export default User;
