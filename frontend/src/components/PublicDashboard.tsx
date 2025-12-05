@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api.service';
 
 const PublicDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -16,14 +16,19 @@ const PublicDashboard: React.FC = () => {
   const fetchPublicStats = async () => {
     try {
       setLoading(true);
+      console.log('Fetching public stats...'); // Debug log
       
       // Fetch real data from the public endpoint
-      const response = await axios.get('/api/group/public');
+      const response = await api.get('/api/group/public');
+      console.log('Public stats response:', response.data); // Debug log
+      console.log('Response count:', response.data.count); // Debug log
       setStats({
-        totalGroups: response.data.count
+        totalGroups: response.data.count || 0
       });
-    } catch (error) {
+      console.log('Stats set to:', response.data.count || 0); // Debug log
+    } catch (error: any) {
       console.error('Error fetching public stats:', error);
+      console.error('Error details:', error.response?.data || error.message); // More detailed error log
       // Show a default value if the request fails
       setStats({
         totalGroups: 0
@@ -32,6 +37,7 @@ const PublicDashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
   const handleSignIn = () => {
     navigate('/login');
   };

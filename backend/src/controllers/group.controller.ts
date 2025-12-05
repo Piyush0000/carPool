@@ -286,12 +286,15 @@ export const getAllGroupsPublic = async (req: Request, res: Response): Promise<v
     const groups = await Group.find()
       .populate('members.user', 'name');
     
+    console.log(`Found ${groups.length} groups in database`); // Debug log
+    
     res.status(200).json({
       success: true,
       count: groups.length,
       data: groups
     });
   } catch (err: any) {
+    console.error('Error fetching public groups:', err); // Debug log
     res.status(500).json({
       success: false,
       message: err.message || 'Server Error'
