@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.matchGroups = exports.getGroup = exports.getUserGroups = exports.getOpenGroups = exports.getAllGroups = exports.lockGroup = exports.leaveGroup = exports.joinGroup = exports.createGroup = void 0;
+exports.matchGroups = exports.getGroup = exports.getUserGroups = exports.getOpenGroups = exports.getAllGroupsPublic = exports.getAllGroups = exports.lockGroup = exports.leaveGroup = exports.joinGroup = exports.createGroup = void 0;
 const Group_model_1 = __importDefault(require("../models/Group.model"));
 const uuid_1 = require("uuid");
 const createGroup = async (req, res) => {
@@ -158,25 +158,27 @@ const lockGroup = async (req, res) => {
             });
             return;
         }
-        const isAdmin = group.members.some(member => member.user._id.toString() === req.user._id.toString() && member.role === 'admin');
+        const isAdmin = group.members.some((member) => member.user._id.toString() === req.user._id.toString() &&
+            member.role === "admin");
         if (!isAdmin) {
             res.status(403).json({
                 success: false,
-                message: 'Only group admin can lock the group'
+                message: "Only group admin can lock the group",
             });
             return;
         }
-        group.status = 'Locked';
+        group.status = "Locked";
         await group.save();
         res.status(200).json({
             success: true,
-            data: group
+            message: "Group locked successfully",
+            data: group,
         });
     }
     catch (err) {
         res.status(500).json({
             success: false,
-            message: err.message || 'Server Error'
+            message: err.message || "Server Error",
         });
     }
 };
@@ -210,6 +212,24 @@ const getAllGroups = async (req, res) => {
     }
 };
 exports.getAllGroups = getAllGroups;
+const getAllGroupsPublic = async (req, res) => {
+    try {
+        const groups = await Group_model_1.default.find()
+            .populate('members.user', 'name');
+        res.status(200).json({
+            success: true,
+            count: groups.length,
+            data: groups
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Server Error'
+        });
+    }
+};
+exports.getAllGroupsPublic = getAllGroupsPublic;
 const getOpenGroups = async (req, res) => {
     try {
         const groups = await Group_model_1.default.find({

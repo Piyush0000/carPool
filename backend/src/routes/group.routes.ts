@@ -7,11 +7,16 @@ import {
   getUserGroups,
   getGroup,
   getAllGroups,
+  getOpenGroups,
+  getAllGroupsPublic,
   matchGroups
 } from '../controllers/group.controller';
 import { protect } from '../middleware/auth.middleware';
-
 const router = express.Router();
+
+// Public routes
+router.route('/public')
+  .get(getAllGroupsPublic);
 
 // All routes below are protected
 router.use(protect);
@@ -19,7 +24,6 @@ router.use(protect);
 router.route('/')
   .get(getAllGroups)
   .post(createGroup);
-
 router.route('/mygroups')
   .get(getUserGroups);
 

@@ -277,6 +277,27 @@ export const getAllGroups = async (req: any, res: Response): Promise<void> => {
   }
 };
 
+// @desc    Get all groups (public endpoint)
+// @route   GET /api/group/public
+// @access  Public
+export const getAllGroupsPublic = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Get all groups (both Open and Locked) with member counts
+    const groups = await Group.find()
+      .populate('members.user', 'name');
+    
+    res.status(200).json({
+      success: true,
+      count: groups.length,
+      data: groups
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Server Error'
+    });
+  }
+};
 // @desc    Get open groups
 // @route   GET /api/group/open
 // @access  Public
