@@ -23,7 +23,6 @@ const location_routes_1 = __importDefault(require("./routes/location.routes"));
 const notification_routes_1 = __importDefault(require("./routes/notification.routes"));
 const geoapify_routes_1 = __importDefault(require("./routes/geoapify.routes"));
 const contact_routes_1 = __importDefault(require("./routes/contact.routes"));
-const stats_routes_1 = __importDefault(require("./routes/stats.routes"));
 const app = (0, express_1.default)();
 exports.app = app;
 const server = http_1.default.createServer(app);
@@ -122,7 +121,6 @@ app.use('/api/location', location_routes_1.default);
 app.use('/api/notifications', notification_routes_1.default);
 app.use('/api/geoapify', geoapify_routes_1.default);
 app.use('/api/contact', contact_routes_1.default);
-app.use('/api/stats', stats_routes_1.default);
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         success: true,

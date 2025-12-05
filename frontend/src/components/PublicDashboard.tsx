@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const PublicDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -16,22 +17,21 @@ const PublicDashboard: React.FC = () => {
     try {
       setLoading(true);
       
-      // In a real app, this would fetch public stats from the backend
-      // For now, we'll use mock data
+      // Fetch real data from the public endpoint
+      const response = await axios.get('/api/group/public');
       setStats({
-        totalGroups: 1247 // Mock data
+        totalGroups: response.data.count
       });
     } catch (error) {
       console.error('Error fetching public stats:', error);
-      // Still show some mock data even if the request fails
+      // Show a default value if the request fails
       setStats({
-        totalGroups: 1200
+        totalGroups: 0
       });
     } finally {
       setLoading(false);
     }
   };
-
   const handleSignIn = () => {
     navigate('/login');
   };

@@ -36,16 +36,16 @@ const HomeDashboard: React.FC = () => {
         // Set recent groups
         setRecentGroups(userGroupsResponse.data.data.slice(0, 3));
       } else {
-        // Fetch only public groups for non-authenticated users
-        const publicGroupsResponse = await axios.get('/api/group/public');
+        // Fetch all groups for non-authenticated users (same as authenticated users see)
+        const allGroupsResponse = await axios.get('/api/group/public');
         
         setStats({
-          totalGroups: publicGroupsResponse.data.data.length,
+          totalGroups: allGroupsResponse.data.count,
           userGroups: 0
         });
         
         // For non-authenticated users, show recent public groups
-        const publicGroups = publicGroupsResponse.data.data.slice(0, 3);
+        const publicGroups = allGroupsResponse.data.data.slice(0, 3);
         setRecentGroups(publicGroups);
       }
     } catch (error) {
