@@ -116,7 +116,7 @@ export const sendContactFormEmail = async (name: string, email: string, subject:
     const { data, error } = await resend.emails.send({
       from: process.env.FROM_EMAIL || 'Ride Pool <onboarding@resend.dev>',
       to: [process.env.CONTACT_EMAIL || config.services?.email?.contactEmail || 'ridebuddyservices@gmail.com'],
-      reply_to: email,
+      replyTo: email,
       subject: `[Contact Form] ${subject}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
