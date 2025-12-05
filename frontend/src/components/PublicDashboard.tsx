@@ -5,8 +5,10 @@ import api from '../services/api.service';
 const PublicDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
-    totalGroups: 0
+    totalGroups: 0,
+    totalUsers: 0
   });
+  const [showAd, setShowAd] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,20 +20,28 @@ const PublicDashboard: React.FC = () => {
       setLoading(true);
       console.log('Fetching public stats...'); // Debug log
       
-      // Fetch real data from the public endpoint
-      const response = await api.get('/api/group/public');
-      console.log('Public stats response:', response.data); // Debug log
-      console.log('Response count:', response.data.count); // Debug log
+      // Fetch real data from the public endpoints
+      const [groupsResponse, usersResponse] = await Promise.all([
+        api.get('/api/group/public'),
+        api.get('/api/users/count')
+      ]);
+      
+      console.log('Public stats response:', { groups: groupsResponse.data, users: usersResponse.data }); // Debug log
       setStats({
-        totalGroups: response.data.count || 0
+        totalGroups: groupsResponse.data.count || 0,
+        totalUsers: usersResponse.data.count || 0
       });
-      console.log('Stats set to:', response.data.count || 0); // Debug log
+      console.log('Stats set to:', { 
+        totalGroups: groupsResponse.data.count || 0,
+        totalUsers: usersResponse.data.count || 0
+      }); // Debug log
     } catch (error: any) {
       console.error('Error fetching public stats:', error);
       console.error('Error details:', error.response?.data || error.message); // More detailed error log
-      // Show a default value if the request fails
+      // Show default values if the request fails
       setStats({
-        totalGroups: 0
+        totalGroups: 0,
+        totalUsers: 0
       });
     } finally {
       setLoading(false);
@@ -44,6 +54,10 @@ const PublicDashboard: React.FC = () => {
 
   const handleSignUp = () => {
     navigate('/register');
+  };
+
+  const handleCloseAd = () => {
+    setShowAd(false);
   };
 
   if (loading) {
@@ -60,6 +74,36 @@ const PublicDashboard: React.FC = () => {
       <div className="background-blob background-blob-1"></div>
       <div className="background-blob background-blob-2"></div>
       
+      {/* Advertisement Banner under Navbar */}
+      {showAd && (
+        <div className="fixed top-20 right-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-200 max-w-xs relative">
+            {/* Close Button */}
+            <button 
+              onClick={handleCloseAd}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            <div className="flex items-start">
+              <div className="bg-gradient-to-r from-yellow-400 to-red-500 p-2 rounded-lg mr-3">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm">🚕 Booking Cabs by Group</h3>
+                <p className="text-xs text-gray-600 mt-1">🔥 EXCLUSIVE 🎯 GROUP DISCOUNTS</p>
+                <p className="text-xs text-gray-500 mt-1">Coming Soon!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10 text-center">
@@ -71,8 +115,8 @@ const PublicDashboard: React.FC = () => {
           </p>
         </div>
 
-        {/* Stats Cards - Only showing Total Groups */}
-        <div className="grid grid-cols-1 gap-6 mb-10">
+        {/* Stats Cards - Showing Total Groups and Total Users */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <div className="ridepool-card p-6 md:p-8">
             <div className="flex flex-col md:flex-row items-center justify-between">
               <div className="flex items-center mb-4 md:mb-0">
@@ -84,6 +128,30 @@ const PublicDashboard: React.FC = () => {
                 <div className="ml-4 md:ml-6">
                   <h3 className="text-base md:text-lg font-medium text-gray-400">Total Groups</h3>
                   <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stats.totalGroups.toLocaleString()}+</p>
+                </div>
+              </div>
+              <div className="text-center md:text-right">
+                <button 
+                  onClick={handleSignUp}
+                  className="ridepool-btn ridepool-btn-primary px-4 py-2 md:px-6 md:py-3 text-sm md:text-base"
+                >
+                  Join Now
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="ridepool-card p-6 md:p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between">
+              <div className="flex items-center mb-4 md:mb-0">
+                <div className="p-3 md:p-4 rounded-lg bg-blue-500 bg-opacity-20">
+                  <svg className="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="ml-4 md:ml-6">
+                  <h3 className="text-base md:text-lg font-medium text-gray-400">Active Users</h3>
+                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{stats.totalUsers.toLocaleString()}+</p>
                 </div>
               </div>
               <div className="text-center md:text-right">

@@ -5,11 +5,16 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  updateUserLocation
+  updateUserLocation,
+  getUserCount
 } from '../controllers/user.controller';
 import { protect, authorize } from '../middleware/auth.middleware';
 
 const router = express.Router();
+
+// Public routes
+router.route('/count')
+  .get(getUserCount);
 
 // All routes below are protected
 router.use(protect);

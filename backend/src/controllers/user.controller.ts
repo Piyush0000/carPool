@@ -22,6 +22,25 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// @desc    Get user count (public endpoint)
+// @route   GET /api/users/count
+// @access  Public
+export const getUserCount = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const count = await User.countDocuments();
+    
+    res.status(200).json({
+      success: true,
+      count: count
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Server Error'
+    });
+  }
+};
+
 // @desc    Get single user
 // @route   GET /api/users/:id
 // @access  Private/Admin
