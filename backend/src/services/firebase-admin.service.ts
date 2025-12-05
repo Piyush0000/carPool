@@ -54,8 +54,13 @@ try {
 export const verifyFirebaseIdToken = async (idToken: string) => {
   try {
     // First, try to properly verify the token using Firebase Admin SDK
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    return decodedToken;
+    if (admin.apps.length > 0) {
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      return decodedToken;
+    } else {
+      // If Firebase Admin is not properly initialized, fall back to manual decoding
+      throw new Error('Firebase Admin not initialized');
+    }
   } catch (verificationError) {
     console.error('Error verifying Firebase ID token with Admin SDK:', verificationError);
     
