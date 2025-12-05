@@ -116,7 +116,22 @@ const UserSchema: Schema = new Schema({
     type: Date
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  // Add this to prevent null values from being stored
+  minimize: false
+});
+
+// Add a pre-save hook to ensure phone field is handled correctly
+UserSchema.pre('save', function(next) {
+  // @ts-ignore
+  if (this.phone === null || this.phone === undefined || this.phone === '' || this.phone === 'N/A') {
+    // @ts-ignore
+    this.phone = undefined;
+    // Remove the field entirely from the document
+    // @ts-ignore
+    this.markModified('phone');
+  }
+  next();
 });
 
 // Index for geospatial queries

@@ -266,6 +266,11 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
   try {
     const { idToken } = req.body;
 
+    console.log('Firebase auth request received:', { 
+      hasIdToken: !!idToken,
+      idTokenLength: idToken ? idToken.length : 0
+    });
+
     if (!idToken) {
       res.status(400).json({
         success: false,
@@ -275,7 +280,14 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
     }
 
     // Verify Firebase ID token
+    console.log('Attempting to verify Firebase ID token...');
     const decodedToken = await verifyFirebaseIdToken(idToken);
+    console.log('Firebase token verified successfully:', {
+      hasEmail: !!decodedToken.email,
+      hasPhone: !!decodedToken.phone_number,
+      email: decodedToken.email,
+      phone: decodedToken.phone_number
+    });
     
     // Extract email from decoded token with multiple fallback options
     let email: string | undefined;
@@ -309,7 +321,7 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
     console.log('Firebase token decoded - Email:', email, 'Phone:', phone);
     
     if (!email) {
-      console.error('Decoded token structure:', JSON.stringify(decodedToken, null, 2));
+      console.error('Invalid Firebase token - missing email. Decoded token structure:', JSON.stringify(decodedToken, null, 2));
       res.status(400).json({
         success: false,
         message: 'Invalid Firebase token: missing email'
@@ -339,7 +351,7 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
       console.log('Phone value:', phone, 'Phone type:', typeof phone);
       
       // Only add phone if it's provided and not empty
-      if (phone && phone.trim() !== '') {
+      if (phone && phone.trim() !== '' && phone.trim() !== 'N/A') {
         userData.phone = phone.trim();
         console.log('Adding phone to user data:', phone.trim());
       } else {
@@ -347,18 +359,22 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
       }
       
       user = await User.create(userData);
+      console.log('User created successfully:', user.email);
     } else if (!user.isEmailVerified) {
       // Update user as verified if they weren't already
       user.isEmailVerified = true;
       user.emailVerificationToken = undefined;
       user.emailVerificationExpires = undefined;
       await user.save();
+      console.log('Existing user updated as verified:', user.email);
     }
 
     // Send token response with proper user data structure
+    console.log('Sending successful auth response for:', user.email);
     sendTokenResponse(user, 200, res);
   } catch (err: any) {
     console.error('Firebase auth error:', err);
+    console.error('Error stack:', err.stack);
     res.status(401).json({
       success: false,
       message: 'Firebase authentication failed: ' + (err.message || 'Unknown error')
