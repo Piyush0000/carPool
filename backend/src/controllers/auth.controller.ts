@@ -59,7 +59,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     // Only add optional fields if they have values
     // For phone, only add if it's provided and not empty
-    if (phone && phone.trim() !== '') userData.phone = phone.trim();
+    if (phone && phone.trim() !== '' && phone.trim() !== 'N/A') {
+      userData.phone = phone.trim();
+    }
     if (gender) userData.gender = gender;
     if (year) userData.year = year;
     if (branch) userData.branch = branch;
@@ -304,6 +306,8 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
       phone = decodedToken.phone_number;
     }
     
+    console.log('Firebase token decoded - Email:', email, 'Phone:', phone);
+    
     if (!email) {
       console.error('Decoded token structure:', JSON.stringify(decodedToken, null, 2));
       res.status(400).json({
@@ -330,8 +334,17 @@ export const firebaseAuth = async (req: Request, res: Response): Promise<void> =
         emailVerificationExpires: undefined
       };
       
+      // Debug log
+      console.log('Creating new user with data:', userData);
+      console.log('Phone value:', phone, 'Phone type:', typeof phone);
+      
       // Only add phone if it's provided and not empty
-      if (phone && phone.trim() !== '') userData.phone = phone.trim();
+      if (phone && phone.trim() !== '') {
+        userData.phone = phone.trim();
+        console.log('Adding phone to user data:', phone.trim());
+      } else {
+        console.log('Not adding phone to user data - phone is null/empty');
+      }
       
       user = await User.create(userData);
     } else if (!user.isEmailVerified) {
