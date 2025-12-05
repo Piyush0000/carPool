@@ -16,7 +16,10 @@ const router = express.Router();
 
 // Public routes
 router.route('/public')
-  .get(getAllGroupsPublic);
+  .get((req, res, next) => {
+    console.log('Public groups endpoint hit'); // Debug log
+    getAllGroupsPublic(req, res);
+  });
 
 // All routes below are protected
 router.use(protect);

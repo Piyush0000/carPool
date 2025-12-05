@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import api from '../services/api.service';
 
 const HomeDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -22,11 +22,15 @@ const HomeDashboard: React.FC = () => {
       setLoading(true);
       
       if (isAuthenticated) {
+        console.log('Fetching authenticated user stats...'); // Debug log
+        
         // Fetch all groups and user groups for authenticated users
         const [allGroupsResponse, userGroupsResponse] = await Promise.all([
-          axios.get('/api/group'),
-          axios.get('/api/group/mygroups')
+          api.get('/api/group'),
+          api.get('/api/group/mygroups')
         ]);
+        
+        console.log('Authenticated user stats:', { allGroupsResponse: allGroupsResponse.data, userGroupsResponse: userGroupsResponse.data }); // Debug log
         
         setStats({
           totalGroups: allGroupsResponse.data.data.length,
@@ -36,11 +40,15 @@ const HomeDashboard: React.FC = () => {
         // Set recent groups
         setRecentGroups(userGroupsResponse.data.data.slice(0, 3));
       } else {
+        console.log('Fetching public user stats...'); // Debug log
+        
         // Fetch all groups for non-authenticated users (same as authenticated users see)
-        const allGroupsResponse = await axios.get('/api/group/public');
+        const allGroupsResponse = await api.get('/api/group/public');
+        
+        console.log('Public user stats:', allGroupsResponse.data); // Debug log
         
         setStats({
-          totalGroups: allGroupsResponse.data.count,
+          totalGroups: allGroupsResponse.data.count || 0,
           userGroups: 0
         });
         
@@ -48,8 +56,9 @@ const HomeDashboard: React.FC = () => {
         const publicGroups = allGroupsResponse.data.data.slice(0, 3);
         setRecentGroups(publicGroups);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
+      console.error('Error details:', error.response?.data || error.message); // More detailed error log
     } finally {
       setLoading(false);
     }
@@ -435,8 +444,9 @@ const HomeDashboard: React.FC = () => {
                       Active Users
                     </h3>
                     <p className="text-4xl font-bold mt-1 gradient-text">
-                      {Math.floor(stats.totalGroups * 2.5)}
+                      {Math.max(0, stats.totalGroups > 0 ? Math.floor(stats.totalGroups * 2.5) : 0)}
                     </p>
+                    <p className="text-xs text-gray-500 mt-1">Estimate based on group activity</p>
                   </div>
                 </div>
               </div>
