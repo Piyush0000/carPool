@@ -10,9 +10,6 @@ lerna-debug.log*
 frontend/.env
 
 
-
-
-
 # Production builds
 dist/
 build/
@@ -239,3 +236,6 @@ Icon?
 *.exe
 *.out
 *.app
+
+# Firebase service account key files
+*-firebase-adminsdk-*.json
