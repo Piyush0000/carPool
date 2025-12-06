@@ -27,6 +27,8 @@ export interface IUser extends Document {
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
   isEmailVerified: boolean;
+  otp?: string;
+  otpExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -114,6 +116,12 @@ const UserSchema: Schema = new Schema({
   },
   emailVerificationExpires: {
     type: Date
+  },
+  otp: {
+    type: String
+  },
+  otpExpires: {
+    type: Date
   }
 }, {
   timestamps: true,
@@ -138,6 +146,7 @@ UserSchema.pre('save', function(next) {
 UserSchema.index({ 'frequentRoute.home.coordinates': '2dsphere' });
 UserSchema.index({ 'frequentRoute.college.coordinates': '2dsphere' });
 UserSchema.index({ 'liveLocation.coordinates': '2dsphere' });
+UserSchema.index({ otp: 1, otpExpires: 1 });
 
 const User = mongoose.model<IUser>('User', UserSchema);
 export default User;

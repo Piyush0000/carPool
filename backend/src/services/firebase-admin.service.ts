@@ -1,21 +1,33 @@
 import admin from 'firebase-admin';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Initialize Firebase Admin SDK
 try {
   // Check if Firebase Admin is already initialized
   if (!admin.apps.length) {
-    // Check if we have Firebase service account credentials
-    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
-      // Production mode with service account credentials
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        }),
-        projectId: process.env.FIREBASE_PROJECT_ID,
-      });
-      console.log('✅ Firebase Admin initialized with service account credentials');
+    // Check if we have Firebase service account credentials file
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      try {
+        // Resolve the path to the service account key file
+        const serviceAccountPath = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+        
+        // Check if the file exists
+        if (fs.existsSync(serviceAccountPath)) {
+          // Initialize with service account key file
+          const serviceAccount = require(serviceAccountPath);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: serviceAccount.project_id,
+          });
+          console.log('✅ Firebase Admin initialized with service account credentials file');
+        } else {
+          throw new Error(`Service account file not found at ${serviceAccountPath}`);
+        }
+      } catch (fileError) {
+        console.error('Error loading service account file:', fileError);
+        throw fileError;
+      }
     } else if (process.env.FIREBASE_PROJECT_ID) {
       // If we only have project ID, try to use default credentials with project ID
       try {

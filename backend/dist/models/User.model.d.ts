@@ -3,7 +3,7 @@ export interface IUser extends Document {
     name: string;
     email: string;
     password: string;
-    phone: string;
+    phone?: string;
     gender?: 'Male' | 'Female' | 'Other';
     year?: string;
     branch?: string;
@@ -26,6 +26,8 @@ export interface IUser extends Document {
     emailVerificationToken?: string;
     emailVerificationExpires?: Date;
     isEmailVerified: boolean;
+    otp?: string;
+    otpExpires?: Date;
     createdAt: Date;
     updatedAt: Date;
 }

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUserLocation = exports.deleteUser = exports.updateUser = exports.createUser = exports.getUser = exports.getUsers = void 0;
+exports.updateUserLocation = exports.deleteUser = exports.updateUser = exports.createUser = exports.getUser = exports.getUserCount = exports.getUsers = void 0;
 const User_model_1 = __importDefault(require("../models/User.model"));
 const auth_utils_1 = require("../utils/auth.utils");
 const getUsers = async (req, res) => {
@@ -23,6 +23,22 @@ const getUsers = async (req, res) => {
     }
 };
 exports.getUsers = getUsers;
+const getUserCount = async (req, res) => {
+    try {
+        const count = await User_model_1.default.countDocuments();
+        res.status(200).json({
+            success: true,
+            count: count
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message || 'Server Error'
+        });
+    }
+};
+exports.getUserCount = getUserCount;
 const getUser = async (req, res) => {
     try {
         const user = await User_model_1.default.findById(req.params.id);
@@ -48,6 +64,15 @@ const getUser = async (req, res) => {
 exports.getUser = getUser;
 const createUser = async (req, res) => {
     try {
+        if (req.body.phone) {
+            if (req.body.phone === null || req.body.phone === undefined ||
+                req.body.phone === '' || req.body.phone === 'N/A') {
+                delete req.body.phone;
+            }
+            else {
+                req.body.phone = req.body.phone.trim();
+            }
+        }
         const user = await User_model_1.default.create(req.body);
         res.status(201).json({
             success: true,
@@ -74,7 +99,18 @@ const updateUser = async (req, res) => {
         if (req.body.password) {
             req.body.password = await (0, auth_utils_1.hashPassword)(req.body.password);
         }
-        const user = await User_model_1.default.findByIdAndUpdate(req.params.id, req.body, {
+        let updateData = { ...req.body };
+        if ('phone' in req.body) {
+            if (req.body.phone === null || req.body.phone === undefined ||
+                req.body.phone === '' || req.body.phone === 'N/A') {
+                updateData.$unset = { phone: "" };
+                delete updateData.phone;
+            }
+            else {
+                updateData.phone = req.body.phone.trim();
+            }
+        }
+        const user = await User_model_1.default.findByIdAndUpdate(req.params.id, updateData, {
             new: true,
             runValidators: true
         });

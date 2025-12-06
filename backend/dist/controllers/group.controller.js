@@ -216,6 +216,7 @@ const getAllGroupsPublic = async (req, res) => {
     try {
         const groups = await Group_model_1.default.find()
             .populate('members.user', 'name');
+        console.log(`Found ${groups.length} groups in database`);
         res.status(200).json({
             success: true,
             count: groups.length,
@@ -223,6 +224,7 @@ const getAllGroupsPublic = async (req, res) => {
         });
     }
     catch (err) {
+        console.error('Error fetching public groups:', err);
         res.status(500).json({
             success: false,
             message: err.message || 'Server Error'
