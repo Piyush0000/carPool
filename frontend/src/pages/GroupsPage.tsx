@@ -107,6 +107,10 @@ const GroupsPage: React.FC = () => {
     const urlParams = new URLSearchParams(location.search);
     const collegeFilter = urlParams.get('college');
     
+    console.log('College filter:', collegeFilter);
+    console.log('All groups length:', allGroups.length);
+    console.log('Current groups length:', groups.length);
+    
     if (collegeFilter && allGroups.length > 0) {
       // Handle "others" case - show groups that don't match any college keywords
       if (collegeFilter === 'others') {
@@ -132,6 +136,7 @@ const GroupsPage: React.FC = () => {
           return !allCollegeKeywords.some(keyword => groupNameLower.includes(keyword));
         });
         
+        console.log('Filtered groups for others:', filtered.length);
         setGroups(filtered);
         return;
       }
@@ -157,12 +162,16 @@ const GroupsPage: React.FC = () => {
       const keywords = collegeKeywords[collegeFilter] || [];
       const filtered = allGroups.filter(group => {
         const groupNameLower = group.groupName.toLowerCase();
-        return keywords.some(keyword => groupNameLower.includes(keyword));
+        const matches = keywords.some(keyword => groupNameLower.includes(keyword));
+        console.log('Checking group:', group.groupName, 'Keywords:', keywords, 'Matches:', matches);
+        return matches;
       });
       
+      console.log('Filtered groups for', collegeFilter, ':', filtered.length);
       setGroups(filtered);
     } else if (allGroups.length > 0) {
       // If no college filter, show all groups based on view mode
+      console.log('Showing all groups without filter');
       setGroups(allGroups);
     }
   }, [location.search, allGroups]);
@@ -170,30 +179,37 @@ const GroupsPage: React.FC = () => {
   const loadGroups = async () => {
     try {
       setLoading(true);
+      console.log('Loading groups, isAuthenticated:', isAuthenticated, 'viewMode:', viewMode);
       
       // For non-authenticated users, only show all groups (not my groups)
       const effectiveViewMode = !isAuthenticated && viewMode === 'my' ? 'all' : viewMode;
+      console.log('Effective view mode:', effectiveViewMode);
       
       let response;
       if (effectiveViewMode === 'all') {
         // For authenticated users, use private endpoint
         // For non-authenticated users, use public endpoint
         if (isAuthenticated) {
+          console.log('Using private getAll endpoint');
           response = await groupAPI.getAll();
         } else {
+          console.log('Using public getAllPublic endpoint');
           response = await groupAPI.getAllPublic();
         }
       } else {
         // My groups is only available for authenticated users
         if (isAuthenticated) {
+          console.log('Using getMyGroups endpoint');
           response = await groupAPI.getMyGroups();
         } else {
           // For non-authenticated users trying to access "my groups", redirect to "all groups"
+          console.log('Non-authenticated user trying to access my groups, redirecting to all groups');
           setViewMode('all');
           response = await groupAPI.getAllPublic();
         }
       }
       
+      console.log('Groups response:', response.data);
       setAllGroups(response.data.data); // Store all groups
       setGroups(response.data.data); // Initially show all groups
       setError(null);
