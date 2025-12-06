@@ -12,17 +12,33 @@ const firebase_admin_service_1 = require("../services/firebase-admin.service");
 const register = async (req, res) => {
     try {
         const { name, email, password, phone, gender, year, branch } = req.body;
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !phone) {
             res.status(400).json({
                 success: false,
-                message: 'Name, email, and password are required'
+                message: 'Please provide name, email, password, and phone'
             });
             return;
         }
-        if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
             res.status(400).json({
                 success: false,
-                message: 'Please enter a valid email'
+                message: 'Please provide a valid email address'
+            });
+            return;
+        }
+        if (password.length < 6) {
+            res.status(400).json({
+                success: false,
+                message: 'Password must be at least 6 characters'
+            });
+            return;
+        }
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(phone)) {
+            res.status(400).json({
+                success: false,
+                message: 'Please provide a valid 10-digit phone number'
             });
             return;
         }
@@ -35,15 +51,12 @@ const register = async (req, res) => {
             return;
         }
         const hashedPassword = await (0, auth_utils_1.hashPassword)(password);
-        const otp = (0, otp_utils_1.generateOTP)();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
         const userData = {
             name,
             email,
             password: hashedPassword,
-            otp,
-            otpExpires,
-            isEmailVerified: false
+            phone,
+            isEmailVerified: true,
         };
         if (phone && phone.trim() !== '' && phone.trim() !== 'N/A') {
             userData.phone = phone.trim();
@@ -55,34 +68,17 @@ const register = async (req, res) => {
         if (branch)
             userData.branch = branch;
         const user = await User_model_1.default.create(userData);
-        try {
-            await (0, otp_utils_1.sendEmailVerificationOTP)(user, otp);
-            res.status(201).json({
-                success: true,
-                message: 'User registered successfully. Please check your email for OTP.',
-                data: {
-                    user: {
-                        id: user._id,
-                        name: user.name,
-                        email: user.email
-                    }
+        res.status(201).json({
+            success: true,
+            message: 'User registered successfully',
+            data: {
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email
                 }
-            });
-        }
-        catch (emailError) {
-            console.error('OTP sending failed:', emailError);
-            res.status(201).json({
-                success: true,
-                message: 'User registered successfully. OTP delivery may be delayed.',
-                data: {
-                    user: {
-                        id: user._id,
-                        name: user.name,
-                        email: user.email
-                    }
-                }
-            });
-        }
+            }
+        });
     }
     catch (err) {
         console.error('Registration error:', err);
@@ -218,13 +214,6 @@ const login = async (req, res) => {
             res.status(401).json({
                 success: false,
                 message: 'Invalid credentials'
-            });
-            return;
-        }
-        if (!user.isEmailVerified) {
-            res.status(401).json({
-                success: false,
-                message: 'Please verify your email before logging in'
             });
             return;
         }

@@ -13,19 +13,39 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const { name, email, password, phone, gender, year, branch } = req.body;
 
     // Validate required fields
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !phone) {
       res.status(400).json({
         success: false,
-        message: 'Name, email, and password are required'
+        message: 'Please provide name, email, password, and phone'
       });
       return;
     }
 
     // Validate email format
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       res.status(400).json({
         success: false,
-        message: 'Please enter a valid email'
+        message: 'Please provide a valid email address'
+      });
+      return;
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters'
+      });
+      return;
+    }
+
+    // Validate phone number (10 digits)
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phone)) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide a valid 10-digit phone number'
       });
       return;
     }
@@ -43,18 +63,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Generate OTP for email verification
-    const otp = generateOTP();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    // Create user - only include fields that have values
+    // Prepare user data
     const userData: any = {
       name,
       email,
       password: hashedPassword,
-      otp,
-      otpExpires,
-      isEmailVerified: false
+      phone,
+      isEmailVerified: true, // Set to true to skip verification
     };
 
     // Only add optional fields if they have values
@@ -68,36 +83,18 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const user = await User.create(userData);
 
-    // Send OTP email (don't fail registration if email fails)
-    try {
-      await sendEmailVerificationOTP(user, otp);
-      
-      res.status(201).json({
-        success: true,
-        message: 'User registered successfully. Please check your email for OTP.',
-        data: {
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email
-          }
+    // Return success response immediately without sending OTP
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email
         }
-      });
-    } catch (emailError) {
-      console.error('OTP sending failed:', emailError);
-      // Still return success but with different message
-      res.status(201).json({
-        success: true,
-        message: 'User registered successfully. OTP delivery may be delayed.',
-        data: {
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email
-          }
-        }
-      });
-    }
+      }
+    });
   } catch (err: any) {
     console.error('Registration error:', err);
     // Handle duplicate key errors specifically
@@ -271,14 +268,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      res.status(401).json({
-        success: false,
-        message: 'Please verify your email before logging in'
-      });
-      return;
-    }
+    // Note: We're no longer checking if email is verified since we're skipping verification
+    // All registered users are considered verified now
 
     sendTokenResponse(user, 200, res);
   } catch (err: any) {
