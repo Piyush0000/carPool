@@ -68,11 +68,8 @@ const Register: React.FC = () => {
       const { confirmPassword, ...registrationData } = formData;
       
       await register(registrationData);
-      // Show success message and redirect to login
-      setError('Registration successful! Please check your email for verification link.');
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
+      // Redirect to OTP verification page
+      navigate('/verify-otp', { state: { email: formData.email } });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create account');
     } finally {

@@ -10,6 +10,8 @@ const router = express_1.default.Router();
 router.post('/register', auth_controller_1.register);
 router.post('/login', auth_controller_1.login);
 router.post('/firebase', auth_controller_1.firebaseAuth);
+router.post('/verify-email-otp', auth_controller_1.verifyEmailWithOTP);
+router.post('/resend-otp', auth_controller_1.resendOTP);
 router.get('/verify-email', auth_controller_1.verifyEmail);
 router.get('/me', auth_middleware_1.protect, auth_controller_1.getMe);
 router.get('/logout', auth_controller_1.logout);

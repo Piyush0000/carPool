@@ -12,6 +12,7 @@ import Profile from './pages/Profile';
 import GroupsPage from './pages/GroupsPage';
 import GroupChatPage from './pages/GroupChatPage';
 import EmailVerification from './pages/EmailVerification';
+import OTPVerification from './pages/OTPVerification';
 import AdminPanel from './pages/AdminPanel';
 import AdminRoute from './components/AdminRoute';
 import ContactUs from './pages/ContactUs';
@@ -172,6 +173,7 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/verify-email" element={<EmailVerification />} />
+              <Route path="/verify-otp" element={<OTPVerification />} />
             </Routes>
           </div>
         </Router>

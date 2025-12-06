@@ -1,41 +1,20 @@
 {
   "name": "campus-cab-pool-backend",
   "version": "1.0.0",
-  "description": "Campus Cab Pool Backend - Student Cab Pooling Platform",
-  "main": "dist/server.js",
+  "description": "Backend for Campus Cab Pool application",
+  "main": "server.ts",
   "scripts": {
-    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true }); console.log('Cleaned dist directory')\"",
-    "build": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --skipLibCheck",
     "start": "node dist/server.js",
-    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/server.ts",
-    "dev:debug": "nodemon --exec node --inspect -r ts-node/register -r tsconfig-paths/register src/server.ts",
-    "watch": "tsc -w",
-    "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "type-check": "tsc --noEmit",
-    "fix-phone-values": "ts-node -r tsconfig-paths/register src/scripts/fix-phone-null-values.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/server.ts",
+    "build": "rimraf dist && tsc",
+    "clean": "rimraf dist",
+    "lint": "eslint . --ext .ts",
+    "test": "jest"
   },
-  "keywords": [
-    "campus",
-    "cab",
-    "pool",
-    "mern",
-    "ride-sharing",
-    "student",
-    "carpooling",
-    "real-time",
-    "socket.io",
-    "mongodb"
-  ],
+  "keywords": [],
   "author": "",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  },
+  "license": "ISC",
   "dependencies": {
-    "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -48,7 +27,6 @@
     "mongoose": "^8.0.3",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^7.0.11",
-    "resend": "^6.5.2",
     "socket.io": "^4.6.1",
     "uuid": "^9.0.1"
   },

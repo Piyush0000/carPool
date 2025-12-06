@@ -8,7 +8,10 @@ const group_controller_1 = require("../controllers/group.controller");
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const router = express_1.default.Router();
 router.route('/public')
-    .get(group_controller_1.getAllGroupsPublic);
+    .get((req, res, next) => {
+    console.log('Public groups endpoint hit');
+    (0, group_controller_1.getAllGroupsPublic)(req, res);
+});
 router.use(auth_middleware_1.protect);
 router.route('/')
     .get(group_controller_1.getAllGroups)

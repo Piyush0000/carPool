@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import User from '../models/User.model';
 import { hashPassword, comparePassword, sendTokenResponse } from '../utils/auth.utils';
-import { sendEmailVerification } from '../utils/email.utils';
+import { generateOTP, sendEmailVerificationOTP } from '../utils/otp.utils';
 import crypto from 'crypto';
 import { verifyFirebaseIdToken } from '../services/firebase-admin.service';
 
@@ -43,17 +43,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Generate email verification token
-    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
-    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // Generate OTP for email verification
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Create user - only include fields that have values
     const userData: any = {
       name,
       email,
       password: hashedPassword,
-      emailVerificationToken,
-      emailVerificationExpires,
+      otp,
+      otpExpires,
       isEmailVerified: false
     };
 
@@ -68,13 +68,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const user = await User.create(userData);
 
-    // Send verification email (don't fail registration if email fails)
+    // Send OTP email (don't fail registration if email fails)
     try {
-      await sendEmailVerification(user, emailVerificationToken);
+      await sendEmailVerificationOTP(user, otp);
       
       res.status(201).json({
         success: true,
-        message: 'User registered successfully. Please check your email for verification link.',
+        message: 'User registered successfully. Please check your email for OTP.',
         data: {
           user: {
             id: user._id,
@@ -84,11 +84,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         }
       });
     } catch (emailError) {
-      console.error('Email sending failed:', emailError);
+      console.error('OTP sending failed:', emailError);
       // Still return success but with different message
       res.status(201).json({
         success: true,
-        message: 'User registered successfully. Email verification may be delayed.',
+        message: 'User registered successfully. OTP delivery may be delayed.',
         data: {
           user: {
             id: user._id,
@@ -109,6 +109,125 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Server Error'
+    });
+  }
+};
+
+// @desc    Verify email with OTP
+// @route   POST /api/auth/verify-email-otp
+// @access  Public
+export const verifyEmailWithOTP = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, otp } = req.body;
+
+    // Validate email and OTP
+    if (!email || !otp) {
+      res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+      return;
+    }
+
+    // Find user with matching email and OTP
+    const user = await User.findOne({
+      email,
+      otp,
+      otpExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP'
+      });
+      return;
+    }
+
+    // Update user as verified
+    user.isEmailVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully'
+    });
+  } catch (err: any) {
+    console.error('Email verification error:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message || 'Server Error'
+    });
+  }
+};
+
+// @desc    Resend OTP
+// @route   POST /api/auth/resend-otp
+// @access  Public
+export const resendOTP = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+      return;
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: 'User not found'
+      });
+      return;
+    }
+
+    // Check if user is already verified
+    if (user.isEmailVerified) {
+      res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+      return;
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Update user with new OTP
+    user.otp = otp;
+    user.otpExpires = otpExpires;
+    await user.save();
+
+    // Send OTP email
+    try {
+      await sendEmailVerificationOTP(user, otp);
+      
+      res.status(200).json({
+        success: true,
+        message: 'OTP resent successfully. Please check your email.'
+      });
+    } catch (emailError) {
+      console.error('OTP resending failed:', emailError);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to resend OTP. Please try again later.'
+      });
+    }
+  } catch (err: any) {
+    console.error('OTP resend error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Server Error'
@@ -152,9 +271,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // TEMPORARY: Allow login without email verification for development
-    // In production, uncomment the lines below:
-    /*
+    // Check if email is verified
     if (!user.isEmailVerified) {
       res.status(401).json({
         success: false,
@@ -162,7 +279,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-    */
 
     sendTokenResponse(user, 200, res);
   } catch (err: any) {
@@ -209,46 +325,102 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
-// @desc    Verify email
+// @desc    Verify email (legacy endpoint - kept for backward compatibility)
 // @route   GET /api/auth/verify-email
 // @access  Public
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { token, userId } = req.query;
+    const { token, userId, oobCode, mode, continueUrl } = req.query;
 
-    // Validate token and userId
-    if (!token || !userId) {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid verification link'
+    // Handle Firebase email verification
+    if (oobCode && mode === 'verifyEmail') {
+      // For Firebase verification, we need to extract the email from the continueUrl
+      // The continueUrl contains our custom verification parameters
+      if (continueUrl && typeof continueUrl === 'string') {
+        try {
+          const url = new URL(continueUrl);
+          const searchParams = new URLSearchParams(url.search);
+          const tokenParam = searchParams.get('token');
+          const userIdParam = searchParams.get('userId');
+          
+          // If we have token and userId in the continueUrl, use the custom verification flow
+          if (tokenParam && userIdParam) {
+            // Find user with matching token and expiration
+            const user = await User.findOne({
+              _id: userIdParam,
+              emailVerificationToken: tokenParam,
+              emailVerificationExpires: { $gt: Date.now() }
+            });
+
+            if (!user) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid or expired verification token'
+              });
+              return;
+            }
+
+            // Update user as verified
+            user.isEmailVerified = true;
+            user.emailVerificationToken = undefined;
+            user.emailVerificationExpires = undefined;
+            await user.save();
+
+            res.status(200).json({
+              success: true,
+              message: 'Email verified successfully'
+            });
+            return;
+          }
+        } catch (urlError) {
+          console.error('Error parsing continueUrl:', urlError);
+        }
+      }
+      
+      // If we can't extract token and userId from continueUrl, 
+      // we'll assume the Firebase flow has already verified the email
+      // and just return success
+      res.status(200).json({
+        success: true,
+        message: 'Email verified successfully through Firebase'
       });
       return;
     }
 
-    // Find user with matching token and expiration
-    const user = await User.findOne({
-      _id: userId,
-      emailVerificationToken: token,
-      emailVerificationExpires: { $gt: Date.now() }
-    });
+    // Handle custom verification with token and userId
+    if (token && userId) {
+      // Find user with matching token and expiration
+      const user = await User.findOne({
+        _id: userId,
+        emailVerificationToken: token,
+        emailVerificationExpires: { $gt: Date.now() }
+      });
 
-    if (!user) {
-      res.status(400).json({
-        success: false,
-        message: 'Invalid or expired verification token'
+      if (!user) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid or expired verification token'
+        });
+        return;
+      }
+
+      // Update user as verified
+      user.isEmailVerified = true;
+      user.emailVerificationToken = undefined;
+      user.emailVerificationExpires = undefined;
+      await user.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Email verified successfully'
       });
       return;
     }
 
-    // Update user as verified
-    user.isEmailVerified = true;
-    user.emailVerificationToken = undefined;
-    user.emailVerificationExpires = undefined;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Email verified successfully'
+    // If neither approach works, return an error
+    res.status(400).json({
+      success: false,
+      message: 'Invalid verification link'
     });
   } catch (err: any) {
     console.error('Email verification error:', err);

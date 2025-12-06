@@ -54,9 +54,14 @@ const UserSchema = new mongoose_1.Schema({
     },
     phone: {
         type: String,
-        required: true,
+        sparse: true,
         unique: true,
-        default: 'N/A'
+        set: function (phone) {
+            if (phone === null || phone === undefined || phone === '' || phone === 'N/A') {
+                return undefined;
+            }
+            return phone;
+        }
     },
     gender: {
         type: String,
@@ -111,13 +116,28 @@ const UserSchema = new mongoose_1.Schema({
     },
     emailVerificationExpires: {
         type: Date
+    },
+    otp: {
+        type: String
+    },
+    otpExpires: {
+        type: Date
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    minimize: false
+});
+UserSchema.pre('save', function (next) {
+    if (this.phone === null || this.phone === undefined || this.phone === '' || this.phone === 'N/A') {
+        this.phone = undefined;
+        this.markModified('phone');
+    }
+    next();
 });
 UserSchema.index({ 'frequentRoute.home.coordinates': '2dsphere' });
 UserSchema.index({ 'frequentRoute.college.coordinates': '2dsphere' });
 UserSchema.index({ 'liveLocation.coordinates': '2dsphere' });
+UserSchema.index({ otp: 1, otpExpires: 1 });
 const User = mongoose_1.default.model('User', UserSchema);
 exports.default = User;
 //# sourceMappingURL=User.model.js.map
