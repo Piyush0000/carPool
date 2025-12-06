@@ -14,6 +14,7 @@ const HomeDashboard: React.FC = () => {
   const [showAd, setShowAd] = useState(true);
   const [recentGroups, setRecentGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showingUserGroups, setShowingUserGroups] = useState(true); // Track if we're showing user's groups or all groups
 
   useEffect(() => {
     fetchDashboardData();
@@ -45,8 +46,15 @@ const HomeDashboard: React.FC = () => {
           totalUsers: userCountResponse.data.count || 0
         });
         
-        // Set recent groups
-        setRecentGroups(userGroupsResponse.data.data.slice(0, 3));
+        // If user has no groups, show recent public groups instead
+        if (userGroupsResponse.data.data.length === 0) {
+          setRecentGroups(allGroupsResponse.data.data.slice(0, 3));
+          setShowingUserGroups(false);
+        } else {
+          // Set recent groups from user's groups
+          setRecentGroups(userGroupsResponse.data.data.slice(0, 3));
+          setShowingUserGroups(true);
+        }
       } else {
         console.log('Fetching public user stats...'); // Debug log
         
@@ -70,6 +78,7 @@ const HomeDashboard: React.FC = () => {
         // For non-authenticated users, show recent public groups
         const publicGroups = allGroupsResponse.data.data.slice(0, 3);
         setRecentGroups(publicGroups);
+        setShowingUserGroups(false);
       }
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
@@ -493,7 +502,7 @@ const HomeDashboard: React.FC = () => {
               <div className="mb-16">
                 <div className="flex items-center justify-between mb-10">
                   <h2 className="text-3xl font-bold text-gray-900">
-                    {isAuthenticated ? 'Your Groups' : 'Popular Groups'}
+                    {isAuthenticated ? (showingUserGroups ? 'Your Groups' : 'Available Groups') : 'Popular Groups'}
                   </h2>
                   <Link 
                     to={isAuthenticated ? "/groups" : "/register"}

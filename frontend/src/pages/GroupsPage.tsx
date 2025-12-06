@@ -1,10 +1,9 @@
-// Fixed GroupsPage.tsx with working group creation
+// Simplified GroupsPage.tsx - Direct approach to show groups to all users
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { groupAPI } from '../services/api.service';
-import MapInput from '../components/MapInput';
 
 interface GroupMember {
   user: {
@@ -35,331 +34,71 @@ interface Group {
 
 const GroupsPage: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
-  const [allGroups, setAllGroups] = useState<Group[]>([]); // Store all groups for filtering
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [viewMode, setViewMode] = useState<'all' | 'my'>('all'); // Toggle between all groups and my groups
-  
-  // Form states
-  const [groupName, setGroupName] = useState('');
-  const [groupDescription, setGroupDescription] = useState('');
-  const [pickupAddress, setPickupAddress] = useState('');
-  const [dropAddress, setDropAddress] = useState('');
-  const [pickupCoordinates, setPickupCoordinates] = useState<[number, number] | null>(null);
-  const [dropCoordinates, setDropCoordinates] = useState<[number, number] | null>(null);
-  const [groupDate, setGroupDate] = useState('');
-  const [groupTime, setGroupTime] = useState('08:00');
-  const [seatCount, setSeatCount] = useState(4);
-  const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
-  const [creatingGroup, setCreatingGroup] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();
   
-  // Handle incoming data from FindPool page
-  useEffect(() => {
-    const state: any = location.state;
-    if (state && state.fromFindPool) {
-      setShowCreateForm(true);
-      
-      // Pre-fill form data if available
-      if (state.formData) {
-        const { pickup, drop } = state.formData;
-        setPickupAddress(pickup);
-        setDropAddress(drop);
-      }
-      
-      // Pre-fill search data if available
-      if (state.searchData) {
-        const { pickupLocation, dropLocation } = state.searchData;
-        if (pickupLocation && pickupLocation.coordinates) {
-          setPickupCoordinates(pickupLocation.coordinates);
-        }
-        if (dropLocation && dropLocation.coordinates) {
-          setDropCoordinates(dropLocation.coordinates);
-        }
-        
-        // Set date and time if available
-        if (state.searchData.dateTime) {
-          const dateTime = new Date(state.searchData.dateTime);
-          setGroupDate(dateTime.toISOString().split('T')[0]);
-          setGroupTime(
-            dateTime.getHours().toString().padStart(2, '0') + 
-            ':' + 
-            dateTime.getMinutes().toString().padStart(2, '0')
-          );
-        }
-      }
-      
-      // Clear the location state
-      window.history.replaceState({}, document.title, location.pathname);
-    }
-  }, [location.state]);
-
-  useEffect(() => {
-    loadGroups();
-  }, [viewMode]);
-
-  useEffect(() => {
-    // Filter groups based on college parameter
-    const urlParams = new URLSearchParams(location.search);
-    const collegeFilter = urlParams.get('college');
-    
-    console.log('College filter:', collegeFilter);
-    console.log('All groups length:', allGroups.length);
-    console.log('Current groups length:', groups.length);
-    
-    if (collegeFilter && allGroups.length > 0) {
-      // Handle "others" case - show groups that don't match any college keywords
-      if (collegeFilter === 'others') {
-        const allCollegeKeywords = [
-          'mait', 'maharaja agrasen',
-          'msit', 'maharaja surajmal',
-          'gtbit', 'guru tegh bahadur',
-          'adgips', 'akhilesh das gupta',
-          'nsut', 'netaji subhas',
-          'dtu', 'delhi technological',
-          'iit', 'indian institute of technology',
-          'iiit', 'indraprastha institute',
-          'bpit', 'bhagwan parshuram',
-          'igdtuw', 'indira gandhi delhi',
-          'du', 'university of delhi', 'north campus', 'south campus',
-          'usar', 'university school automation',
-          'usict', 'university school information',
-          'vips', 'vivekananda institute'
-        ];
-        
-        const filtered = allGroups.filter(group => {
-          const groupNameLower = group.groupName.toLowerCase();
-          return !allCollegeKeywords.some(keyword => groupNameLower.includes(keyword));
-        });
-        
-        console.log('Filtered groups for others:', filtered.length);
-        setGroups(filtered);
-        return;
-      }
-      
-      const collegeKeywords: Record<string, string[]> = {
-        'mait': ['mait', 'maharaja agrasen'],
-        'msit': ['msit', 'maharaja surajmal'],
-        'gtbit': ['gtbit', 'guru tegh bahadur'],
-        'adgips': ['adgips', 'akhilesh das gupta'],
-        'nsut': ['nsut', 'netaji subhas'],
-        'dtu': ['dtu', 'delhi technological'],
-        'iitd': ['iit', 'indian institute of technology'],
-        'iiitd': ['iiit', 'indraprastha institute'],
-        'bpit': ['bpit', 'bhagwan parshuram'],
-        'igdtuw': ['igdtuw', 'indira gandhi delhi'],
-        'du_north': ['du', 'university of delhi', 'north campus'],
-        'du_south': ['du', 'university of delhi', 'south campus'],
-        'usar': ['usar', 'university school automation'],
-        'usict': ['usict', 'university school information'],
-        'vips': ['vips', 'vivekananda institute']
-      };
-      
-      const keywords = collegeKeywords[collegeFilter] || [];
-      const filtered = allGroups.filter(group => {
-        const groupNameLower = group.groupName.toLowerCase();
-        const matches = keywords.some(keyword => groupNameLower.includes(keyword));
-        console.log('Checking group:', group.groupName, 'Keywords:', keywords, 'Matches:', matches);
-        return matches;
-      });
-      
-      console.log('Filtered groups for', collegeFilter, ':', filtered.length);
-      setGroups(filtered);
-    } else if (allGroups.length > 0) {
-      // If no college filter, show all groups based on view mode
-      console.log('Showing all groups without filter');
-      setGroups(allGroups);
-    }
-  }, [location.search, allGroups]);
-
+  // Load groups - always use public endpoint for simplicity
   const loadGroups = async () => {
     try {
       setLoading(true);
-      console.log('Loading groups, isAuthenticated:', isAuthenticated, 'viewMode:', viewMode);
-      
-      // For non-authenticated users, only show all groups (not my groups)
-      const effectiveViewMode = !isAuthenticated && viewMode === 'my' ? 'all' : viewMode;
-      console.log('Effective view mode:', effectiveViewMode);
-      
-      let response;
-      if (effectiveViewMode === 'all') {
-        // For authenticated users, use private endpoint
-        // For non-authenticated users, use public endpoint
-        if (isAuthenticated) {
-          console.log('Using private getAll endpoint');
-          response = await groupAPI.getAll();
-        } else {
-          console.log('Using public getAllPublic endpoint');
-          response = await groupAPI.getAllPublic();
-        }
-      } else {
-        // My groups is only available for authenticated users
-        if (isAuthenticated) {
-          console.log('Using getMyGroups endpoint');
-          response = await groupAPI.getMyGroups();
-        } else {
-          // For non-authenticated users trying to access "my groups", redirect to "all groups"
-          console.log('Non-authenticated user trying to access my groups, redirecting to all groups');
-          setViewMode('all');
-          response = await groupAPI.getAllPublic();
-        }
-      }
-      
-      console.log('Groups response:', response.data);
-      setAllGroups(response.data.data); // Store all groups
-      setGroups(response.data.data); // Initially show all groups
       setError(null);
+      
+      // Always use the public endpoint to get groups
+      const response = await groupAPI.getAllPublic();
+      setGroups(response.data.data);
     } catch (err: any) {
       console.error('Error loading groups:', err);
-      setError('Failed to load groups');
+      setError('Failed to load groups. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
-
-  const handleCreateGroup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    if (!groupName.trim()) {
-      setError('Group name is required');
-      return;
-    }
-    
-    if (!pickupAddress.trim() || !dropAddress.trim()) {
-      setError('Both pickup and drop addresses are required');
-      return;
-    }
-    
-    if (!pickupCoordinates || !dropCoordinates) {
-      setError('Please select locations from the suggestions');
-      return;
-    }
-    
-    if (!groupDate) {
-      setError('Date is required');
-      return;
-    }
-    
-    try {
-      setCreatingGroup(true);
-      setError(null);
-      
-      // Combine date and time
-      const dateTime = `${groupDate}T${groupTime}:00`;
-      
-      // Create group payload
-      const groupData = {
-        groupName: groupName.trim(),
-        description: groupDescription.trim(),
-        route: {
-          pickup: {
-            address: pickupAddress,
-            coordinates: pickupCoordinates
-          },
-          drop: {
-            address: dropAddress,
-            coordinates: dropCoordinates
-          }
-        },
-        dateTime: dateTime,
-        seatCount: seatCount
-      };
-      
-      console.log('Creating group with data:', groupData);
-      
-      // Call API
-      const response = await groupAPI.create(groupData);
-      
-      console.log('Group created successfully:', response.data);
-      
-      // Navigate to the newly created group
-      if (response.data.data && response.data.data._id) {
-        navigate(`/group/${response.data.data._id}`);
-        return;
-      }
-      
-      // If navigation didn't happen, reload groups and close form
-      await loadGroups();
-      resetForm();
-      setShowCreateForm(false);
-      
-    } catch (err: any) {
-      console.error('Error creating group:', err);
-      console.error('Error response:', err.response?.data);
-      setError(err.response?.data?.message || 'Failed to create group. Please try again.');
-    } finally {
-      setCreatingGroup(false);
-    }
-  };
-
-  const resetForm = () => {
-    setGroupName('');
-    setGroupDescription('');
-    setPickupAddress('');
-    setDropAddress('');
-    setPickupCoordinates(null);
-    setDropCoordinates(null);
-    setGroupDate('');
-    setGroupTime('08:00');
-    setSeatCount(4);
-  };
-
+  
+  useEffect(() => {
+    loadGroups();
+  }, []);
+  
+  // Handle group join
   const handleJoinGroup = async (groupId: string) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
     try {
-      setJoiningGroupId(groupId);
       await groupAPI.join(groupId);
-      navigate(`/group/${groupId}`);
+      // Reload groups to update membership status
+      loadGroups();
     } catch (err: any) {
       console.error('Error joining group:', err);
       const errorMessage = err.response?.data?.message || 'Failed to join group';
       setError(errorMessage);
       setTimeout(() => setError(null), 3000);
-    } finally {
-      setJoiningGroupId(null);
     }
   };
-
+  
+  // Handle group detail navigation
   const goToGroupDetail = (groupId: string) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
     navigate(`/group/${groupId}`);
   };
-
-  // Check if there's a college filter in the URL
-  const urlParams = new URLSearchParams(location.search);
-  const collegeFilter = urlParams.get('college');
   
-  // College names mapping
-  const collegeNames: Record<string, string> = {
-    'dtu': 'Delhi Technological University (DTU)',
-    'nsut': 'Netaji Subhas University of Technology (NSUT)',
-    'igdtuw': 'Indira Gandhi Delhi Technical University for Women (IGDTUW)',
-    'iitd': 'Indian Institute of Technology Delhi (IITD)',
-    'iiitd': 'Indraprastha Institute of Information Technology Delhi (IIITD)',
-    'mait': 'Maharaja Agrasen Institute of Technology (MAIT)',
-    'msit': 'Maharaja Surajmal Institute of Technology (MSIT)',
-    'gtbit': 'Guru Tegh Bahadur Institute of Technology (GTBIT)',
-    'usict': 'University School of Information, Communication & Technology (USICT)',
-    'usar': 'University School of Automation & Robotics (USAR)',
-    'du_north': 'University of Delhi (North Campus)',
-    'du_south': 'University of Delhi (South Campus)',
-    'bpit': 'Bhagwan Parshuram Institute of Technology (BPIT)',
-    'adgips': 'Akhilesh Das Gupta Institute of Technology & Management (ADGIPS)',
-    'vips': 'Vivekananda Institute of Professional Studies (VIPS)',
-    'others': 'Other Colleges'
-  };
-
-  if (loading && groups.length === 0) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 flex items-center justify-center">
         <div className="spinner w-16 h-16"></div>
       </div>
     );
   }
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -368,92 +107,44 @@ const GroupsPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {collegeFilter ? collegeNames[collegeFilter] || 'College Groups' : 'Student Groups'}
+                Student Groups
               </h1>
               <p className="mt-2 text-gray-700">
-                {collegeFilter 
-                  ? collegeFilter === 'others' 
-                    ? 'Groups from other colleges and institutions' 
-                    : `Groups matching "${collegeNames[collegeFilter] || collegeFilter}" keywords`
-                  : viewMode === 'all' 
-                    ? 'Connect with fellow students traveling on similar routes' 
-                    : 'Your groups'
-                }
+                Connect with fellow students traveling on similar routes
               </p>
-              {collegeFilter && (
-                <div className="mt-2 flex items-center">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
-                    <svg className="mr-1.5 h-4 w-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    {collegeFilter === 'others' ? 'Other Colleges' : 'College Specific'}
-                  </span>
-                  <button 
-                    onClick={() => navigate('/groups')}
-                    className="ml-3 text-sm text-purple-600 hover:text-purple-800 font-medium"
-                  >
-                    View All Groups
-                  </button>
-                </div>
-              )}
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setViewMode('all');
-                }}
-                className={`px-4 py-2 rounded-lg font-medium ${viewMode === 'all' ? 'ridepool-btn ridepool-btn-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                All Groups
-              </button>
-              <button
-                onClick={() => {
-                  if (isAuthenticated) {
-                    setViewMode('my');
-                  } else {
-                    // Redirect to login for non-authenticated users
-                    navigate('/login');
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg font-medium ${viewMode === 'my' ? 'ridepool-btn ridepool-btn-primary' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                disabled={!isAuthenticated}
-              >
-                My Groups
-              </button>
               <button
                 onClick={() => {
                   if (isAuthenticated) {
                     setShowCreateForm(!showCreateForm);
                     setError(null);
-                    if (!showCreateForm) resetForm();
                   } else {
-                    // Redirect to login for non-authenticated users
-                    navigate('/login');
+                    navigate('/register');
                   }
                 }}
                 className="ridepool-btn ridepool-btn-primary"
-                disabled={!isAuthenticated}
               >
-                {showCreateForm ? (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Cancel
-                  </>
-                ) : (
+                {isAuthenticated ? (
                   <>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                     Create Group
                   </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Sign Up
+                  </>
                 )}
               </button>
             </div>
           </div>
         </div>
-
+        
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg animate-slideInLeft">
@@ -465,189 +156,84 @@ const GroupsPage: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* Create Group Form */}
-        {showCreateForm && (
-          <div className="mb-8 ridepool-card p-6 animate-slideInTop">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Create New Group</h2>
-            <form onSubmit={handleCreateGroup} className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Group Name *
-                </label>
-                <input
-                  type="text"
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  className="ridepool-input"
-                  placeholder="e.g., Morning Campus Commute"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Description (Optional)
-                </label>
-                <textarea
-                  value={groupDescription}
-                  onChange={(e) => setGroupDescription(e.target.value)}
-                  className="ridepool-input resize-none"
-                  placeholder="Describe your group..."
-                  rows={3}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Pickup Location *
-                  </label>
-                  <MapInput
-                    onLocationSelect={(location: { address: string; coordinates: [number, number] }) => {
-                      setPickupAddress(location.address);
-                      setPickupCoordinates(location.coordinates);
-                    }}
-                    placeholder="Enter pickup location"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Drop Location *
-                  </label>
-                  <MapInput
-                    onLocationSelect={(location: { address: string; coordinates: [number, number] }) => {
-                      setDropAddress(location.address);
-                      setDropCoordinates(location.coordinates);
-                    }}
-                    placeholder="Enter drop location"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={groupDate}
-                    onChange={(e) => setGroupDate(e.target.value)}
-                    className="ridepool-input"
-                    required
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Time *
-                  </label>
-                  <input
-                    type="time"
-                    value={groupTime}
-                    onChange={(e) => setGroupTime(e.target.value)}
-                    className="ridepool-input"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Seats
-                  </label>
-                  <select
-                    value={seatCount}
-                    onChange={(e) => setSeatCount(parseInt(e.target.value))}
-                    className="ridepool-input"
-                  >
-                    <option value={2}>2 seats</option>
-                    <option value={3}>3 seats</option>
-                    <option value={4}>4 seats</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    resetForm();
-                  }}
-                  className="ridepool-btn bg-gray-200 text-gray-700 hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={creatingGroup}
-                  className="ridepool-btn ridepool-btn-primary"
-                >
-                  {creatingGroup ? (
-                    <>
-                      <div className="spinner w-5 h-5 border-2"></div>
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Create Group
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
+        
         {/* Groups List */}
         <div className="ridepool-card p-6 animate-fadeIn">
           <h2 className="text-xl font-bold text-gray-900 mb-6">
-            {collegeFilter 
-              ? `${collegeNames[collegeFilter] || 'College'} Groups` 
-              : viewMode === 'all' 
-                ? 'Available Groups' 
-                : 'My Groups'
-            }
+            Available Groups
           </h2>
           
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="spinner w-12 h-12"></div>
-            </div>
-          ) : groups.length === 0 ? (
+          {groups.length === 0 ? (
             <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-700">No groups found</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {collegeFilter 
-                  ? collegeFilter === 'others'
-                    ? 'No groups found from other colleges'
-                    : `No groups found matching "${collegeNames[collegeFilter] || collegeFilter}" keywords` 
-                  : isAuthenticated 
-                    ? 'Be the first to create a group!'
-                    : 'Sign up to create or join groups!'}
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Ready to start sharing rides?</h3>
+              <p className="mt-2 text-base text-gray-500">
+                Create your first group to connect with fellow students traveling on similar routes.
               </p>
-              <div className="mt-6">
-                <button
-                  onClick={() => {
-                    if (isAuthenticated) {
-                      setShowCreateForm(true);
-                    } else {
-                      navigate('/register');
-                    }
-                  }}
-                  className="ridepool-btn ridepool-btn-primary"
-                >
-                  {isAuthenticated ? 'Create Your First Group' : 'Sign Up to Get Started'}
-                </button>
+              <div className="mt-8">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <svg className="h-8 w-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0 flex-1 ml-4">
+                        <button 
+                          onClick={() => {
+                            if (isAuthenticated) {
+                              setShowCreateForm(true);
+                            } else {
+                              navigate('/register');
+                            }
+                          }}
+                          className="focus:outline-none"
+                        >
+                          <span className="absolute inset-0" aria-hidden="true" />
+                          <p className="text-sm font-medium text-gray-900">Create New Group</p>
+                          <p className="text-sm text-gray-500">Start a new ride sharing group</p>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <svg className="h-8 w-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                      <div className="min-w-0 flex-1 ml-4">
+                        <button 
+                          onClick={() => navigate('/find-pool')}
+                          className="focus:outline-none"
+                        >
+                          <span className="absolute inset-0" aria-hidden="true" />
+                          <p className="text-sm font-medium text-gray-900">Find Groups</p>
+                          <p className="text-sm text-gray-500">Search for existing groups</p>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {!isAuthenticated && (
+                  <div className="mt-8">
+                    <p className="text-sm text-gray-500">
+                      Already have an account?{' '}
+                      <button 
+                        onClick={() => navigate('/login')}
+                        className="font-medium text-purple-600 hover:text-purple-500"
+                      >
+                        Sign in
+                      </button>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -656,14 +242,7 @@ const GroupsPage: React.FC = () => {
                 <div 
                   key={group._id} 
                   className="ridepool-card p-5 cursor-pointer animate-slideInLeft"
-                  onClick={() => {
-                    if (isAuthenticated) {
-                      goToGroupDetail(group._id);
-                    } else {
-                      // Redirect to login for non-authenticated users
-                      navigate('/login');
-                    }
-                  }}
+                  onClick={() => goToGroupDetail(group._id)}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-lg font-bold text-gray-900">{group.groupName}</h3>
@@ -704,56 +283,6 @@ const GroupsPage: React.FC = () => {
                       </svg>
                       {group.members.length}/{group.seatCount}
                     </div>
-                    
-                    {/* Member details with year and branch */}
-                    <div className="flex -space-x-2">
-                      {group.members.slice(0, 3).map((member) => (
-                        <div 
-                          key={member.user._id} 
-                          className="relative group"
-                          title={`${member.user.name}${member.user.year ? ` (${member.user.year})` : ''}${member.user.branch ? ` - ${member.user.branch}` : ''}`}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold border-2 border-white">
-                            {member.user.name.charAt(0)}
-                          </div>
-                          {member.user.year && (
-                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                              <div className="text-center">
-                                <div className="font-medium">{member.user.name}</div>
-                                <div>{member.user.year}{member.user.branch ? ` • ${member.user.branch}` : ''}</div>
-                              </div>
-                              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 w-2 h-2 bg-gray-800 rotate-45"></div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {group.members.length > 3 && (
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold border-2 border-white">
-                          +{group.members.length - 3}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {viewMode === 'all' && isAuthenticated && (
-                      group.isMember ? (
-                        <span className="text-sm text-green-600 font-medium">Member</span>
-                      ) : group.canJoin ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleJoinGroup(group._id);
-                          }}
-                          disabled={joiningGroupId === group._id}
-                          className="ridepool-btn ridepool-btn-primary text-sm px-4 py-2"
-                        >
-                          {joiningGroupId === group._id ? 'Joining...' : 'Join'}
-                        </button>
-                      ) : (
-                        <span className="text-sm text-gray-500">
-                          {group.status === 'Locked' ? 'Locked' : 'Full'}
-                        </span>
-                      )
-                    )}
                   </div>
                 </div>
               ))}
