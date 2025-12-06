@@ -80,6 +80,8 @@ export const groupAPI = {
   leave: (id: string) => api.post(`/api/group/leave/${id}`),
   lock: (id: string) => api.patch(`/api/group/lock/${id}`),
   match: (data: any) => api.post('/api/group/match', data),
+  // Add public endpoint for non-authenticated users
+  getAllPublic: () => api.get('/api/group/public')
 };
 
 // Chat APIs

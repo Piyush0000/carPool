@@ -68,8 +68,11 @@ const Register: React.FC = () => {
       const { confirmPassword, ...registrationData } = formData;
       
       await register(registrationData);
-      // Redirect to login page after successful registration (no verification needed)
-      navigate('/login');
+      // Show success message and redirect to login
+      setError('Registration successful! You can now login with your credentials.');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create account');
     } finally {
@@ -110,8 +113,8 @@ const Register: React.FC = () => {
         </div>
         
         {error && (
-          <div className="rounded-md bg-red-500 bg-opacity-20 p-4 border border-red-500 border-opacity-30 animate-shake">
-            <div className="text-sm text-red-700">
+          <div className={`rounded-md p-4 border bg-opacity-20 ${error.includes('successful') || error.includes('success') ? 'bg-green-500 border-green-500' : 'bg-red-500 border-red-500'} animate-shake`}>
+            <div className={`text-sm ${error.includes('successful') || error.includes('success') ? 'text-green-700' : 'text-red-700'}`}>
               {error}
             </div>
           </div>

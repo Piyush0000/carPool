@@ -174,9 +174,25 @@ const GroupsPage: React.FC = () => {
       // For non-authenticated users, only show all groups (not my groups)
       const effectiveViewMode = !isAuthenticated && viewMode === 'my' ? 'all' : viewMode;
       
-      const response = effectiveViewMode === 'all' 
-        ? await groupAPI.getAll() 
-        : await groupAPI.getMyGroups();
+      let response;
+      if (effectiveViewMode === 'all') {
+        // For authenticated users, use private endpoint
+        // For non-authenticated users, use public endpoint
+        if (isAuthenticated) {
+          response = await groupAPI.getAll();
+        } else {
+          response = await groupAPI.getAllPublic();
+        }
+      } else {
+        // My groups is only available for authenticated users
+        if (isAuthenticated) {
+          response = await groupAPI.getMyGroups();
+        } else {
+          // For non-authenticated users trying to access "my groups", redirect to "all groups"
+          setViewMode('all');
+          response = await groupAPI.getAllPublic();
+        }
+      }
       
       setAllGroups(response.data.data); // Store all groups
       setGroups(response.data.data); // Initially show all groups
@@ -599,14 +615,22 @@ const GroupsPage: React.FC = () => {
                   ? collegeFilter === 'others'
                     ? 'No groups found from other colleges'
                     : `No groups found matching "${collegeNames[collegeFilter] || collegeFilter}" keywords` 
-                  : 'Be the first to create a group!'}
+                  : isAuthenticated 
+                    ? 'Be the first to create a group!'
+                    : 'Sign up to create or join groups!'}
               </p>
               <div className="mt-6">
                 <button
-                  onClick={() => setShowCreateForm(true)}
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      setShowCreateForm(true);
+                    } else {
+                      navigate('/register');
+                    }
+                  }}
                   className="ridepool-btn ridepool-btn-primary"
                 >
-                  Create Your First Group
+                  {isAuthenticated ? 'Create Your First Group' : 'Sign Up to Get Started'}
                 </button>
               </div>
             </div>
