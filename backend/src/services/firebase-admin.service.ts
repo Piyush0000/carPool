@@ -1,32 +1,25 @@
 import admin from 'firebase-admin';
-import * as fs from 'fs';
-import * as path from 'path';
 
 // Initialize Firebase Admin SDK
 try {
   // Check if Firebase Admin is already initialized
   if (!admin.apps.length) {
-    // Check if we have Firebase service account credentials file
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    // Check if we have Firebase service account credentials in environment variables
+    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       try {
-        // Resolve the path to the service account key file
-        const serviceAccountPath = path.resolve(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-        
-        // Check if the file exists
-        if (fs.existsSync(serviceAccountPath)) {
-          // Initialize with service account key file
-          const serviceAccount = require(serviceAccountPath);
-          admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            projectId: serviceAccount.project_id,
-          });
-          console.log('✅ Firebase Admin initialized with service account credentials file');
-        } else {
-          throw new Error(`Service account file not found at ${serviceAccountPath}`);
-        }
-      } catch (fileError) {
-        console.error('Error loading service account file:', fileError);
-        throw fileError;
+        // Initialize with environment variables
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          }),
+          projectId: process.env.FIREBASE_PROJECT_ID,
+        });
+        console.log('✅ Firebase Admin initialized with environment variables');
+      } catch (initError) {
+        console.error('Error initializing Firebase Admin with environment variables:', initError);
+        throw initError;
       }
     } else if (process.env.FIREBASE_PROJECT_ID) {
       // If we only have project ID, try to use default credentials with project ID
